@@ -5,7 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/murrayju/xslt/badge.svg)](https://coveralls.io/r/murrayju/xslt)
 [![devDependency Status](https://img.shields.io/david/dev/murrayju/xslt.svg)](https://david-dm.org/murrayju/xslt#info=devDependencies)
 
-[![Sauce Test Status](https://saucelabs.com/browser-matrix/murrayju.svg)](https://saucelabs.com/u/murrayju)
+[![Sauce Test Status](https://saucelabs.com/browser-matrix/murrayju_xslt.svg)](https://saucelabs.com/u/murrayju_xslt)
 
 A simple wrapper around browser based xslt. Exposes a nice modern promise based api.
 
