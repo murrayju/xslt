@@ -1,0 +1,17 @@
+syntax: glob
+.idea/workspace.xml
+.idea\coffeelintPlugin.xml
+.idea\jenkinsSettings.xml
+.vagrant/
+node_modules/
+bower_components/
+src/lib/
+dist/
+download/
+reports/
+package.json
+npm-debug.log
+*.generated.js
+*.orig
+.sync/
+bower.json

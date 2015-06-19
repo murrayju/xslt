@@ -1,0 +1,16 @@
+language: node_js
+node_js:
+- stable
+install: bash build.sh deps
+script: bash build.sh --buildNum $TRAVIS_BUILD_NUMBER --all-sl
+after_success: bash build.sh coveralls
+env:
+  global:
+deploy:
+  provider: releases
+  file_glob: true
+  file: dist/*.zip
+  skip_cleanup: true
+  on:
+    repo: murrayju/xslt
+    tags: true

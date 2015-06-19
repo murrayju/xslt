@@ -1,0 +1,31 @@
+{
+    "name": "xslt",
+    "description": "A simple wrapper around browser xslt",
+    "keywords": [
+        "js",
+        "xslt",
+        "xml"
+    ],
+    "homepage": "https://github.com/murrayju/xslt",
+    "license": "MIT",
+    "main": [
+        "dist/xslt.min.js"
+    ],
+    "ignore": [
+        "/.*",
+        "*.templ.json",
+        "test",
+        "build.*",
+        "Gruntfile.js"
+    ],
+    "devDependencies": {
+        "coffee-script": "1",
+        "requirejs": "2",
+        "require-cs": "0.5"
+    },
+    "exportsOverride": {
+        "coffee-script": {
+            "extras": "extras/*"
+        }
+    }
+}

@@ -1,0 +1,14 @@
+bower_components/
+dist/*.zip
+download/
+node_modules/
+reports/
+src/lib/
+test/
+
+/.*
+*.log
+*.orig
+*.templ.json
+/build.*
+/Gruntfile.js
