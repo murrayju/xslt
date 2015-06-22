@@ -6,7 +6,7 @@ define(['jquery', 'prettydiff'], function ($, prettydiff) {
 
     var util = {};
 
-    util.xmlDiff = function (orig, diff) {
+    util.xmlDiff = function (orig, diff, html) {
         expect(typeof orig).toEqual('string');
         expect(typeof diff).toEqual('string');
         var source = prettydiff({
@@ -27,6 +27,7 @@ define(['jquery', 'prettydiff'], function ($, prettydiff) {
             source: source[0],
             diff: changedDoc[0],
             lang: 'markup',
+            force_indent: html,
             context: 1
         });
         var results = $(pretty[0]);

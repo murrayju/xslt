@@ -20,4 +20,4 @@ define [
 
     it 'can do a simple transform', ->
       str = xslt(helloXml, helloXsl, true)
-      util.xmlDiff(helloOutput, str)
+      util.xmlDiff(helloOutput, str, true)

@@ -58,6 +58,7 @@
   newDocument = ->
     d = null
     d ?= createDomDoc()
+    return d if DOMParser?
     d ?= manualCreateElement()
     d ?= document.implementation?.createDocument?("", 'test', null)
     return d
@@ -68,11 +69,11 @@
     str = prependHeader(str) if needsHeader(str)
 
     d = newDocument()
-    if 'loadXML' of d
+    if d? and 'loadXML' of d
       d.loadXML(str)
       if !d.documentElement? || d.parseError?.errorCode != 0
         throw new Error("loadXML error: #{d.parseError}")
-    else if 'load' of d
+    else if d? and 'load' of d
       d.load(str)
     else if DOMParser?
       d = (new DOMParser?())?.parseFromString?(str, 'text/xml')
