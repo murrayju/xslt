@@ -21,7 +21,10 @@
     "devDependencies": {
         "coffee-script": "1",
         "requirejs": "2",
-        "require-cs": "0.5"
+        "require-cs": "0.5",
+        "text": "*",
+        "jquery": "1",
+        "prettydiff": "austincheney/prettydiff"
     },
     "exportsOverride": {
         "coffee-script": {

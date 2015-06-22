@@ -29,6 +29,9 @@
             // test only
             'cs': debug ? 'lib/require-cs/cs' : '../test/karma/cs-passthrough',
             'coffee': 'lib/require-cs/cs',
+            text: 'lib/text/text',
+            prettydiff: 'lib/prettydiff/prettydiff',
+            jquery: 'lib/jquery/jquery',
             'coffee-script': 'lib/coffee-script/extras/coffee-script'
         },
 

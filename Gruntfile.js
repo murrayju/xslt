@@ -101,6 +101,7 @@ module.exports = function (grunt) {
                     files: [
                         'test/karma/test-main.js',
                         {pattern: 'test/karma/**/*', included: false},
+                        {pattern: 'test/data/**/*', included: false},
                         {pattern: 'src/**/*', included: false}
                     ],
 
