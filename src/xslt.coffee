@@ -15,7 +15,7 @@
   needsHeader = (str) -> isXml(str) && !hasXmlHeader(str)
   xmlHeader = '<?xml version="1.0" ?>'
   prependHeader = (str) -> xmlHeader + str
-  activeXSupported = ActiveXObject? || 'ActiveXObject' in window
+  activeXSupported = ActiveXObject? || 'ActiveXObject' of window
 
   tryCreateActiveX = (objIds...) ->
     return null unless activeXSupported
@@ -57,7 +57,6 @@
 
   newDocument = ->
     d = null
-    d ?= new DOMParser?()
     d ?= createDomDoc()
     d ?= manualCreateElement()
     d ?= document.implementation?.createDocument?("", 'test', null)
@@ -69,21 +68,22 @@
     str = prependHeader(str) if needsHeader(str)
 
     d = newDocument()
-    if d?.loadXML?
+    if 'loadXML' of d
       d.loadXML(str)
       if !d.documentElement? || d.parseError?.errorCode != 0
         throw new Error("loadXML error: #{d.parseError}")
-    else if d?.load?
+    else if 'load' of d
       d.load(str)
-    else if d?.parseFromString?
-      d = d.parseFromString(str, 'text/xml')
-      if d?.getElementsByTagName?('parsererror')?.length > 0 || d?.documentElement?.tagName == 'parsererror'
+    else if DOMParser?
+      d = (new DOMParser?())?.parseFromString?(str, 'text/xml')
+      if d?.getElementsByTagName?('parsererror')?.length > 0 || d?.documentElement?.nodeName == 'parsererror'
         throw new Error("Failed to load document from string:\r\n#{d.documentElement.textContent}")
     return d
 
   docToStr = (doc) ->
-    xml = doc.xml || new XMLSerializer?()?.serializeToString?(doc)
-    if xml.indexOf("<transformiix::result") >= 0
+    return null unless doc?
+    xml = doc?.xml || new XMLSerializer?()?.serializeToString?(doc)
+    if xml?.indexOf?("<transformiix::result") >= 0
       xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"))
     return xml
 
@@ -99,7 +99,7 @@
         processor.transformToDocument(xmlDoc)
       else
         processor.transformToFragment(xmlDoc, document)
-    else if xmlDoc.transformNode?
+    else if 'transformNode' of xmlDoc
       return xmlDoc.transformNode(xsltDoc)
     else if activeXSupported
       xslt = createXSLTemplate()
