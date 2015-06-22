@@ -60,7 +60,7 @@
     d ?= new DOMParser?()
     d ?= createDomDoc()
     d ?= manualCreateElement()
-    d ?= document.implementation?.createDocument?("", 'test', null);
+    d ?= document.implementation?.createDocument?("", 'test', null)
     return d
 
 
@@ -72,18 +72,42 @@
     if d?.loadXML?
       d.loadXML(str)
       if !d.documentElement? || d.parseError?.errorCode != 0
-        throw "loadXML error: #{d.parseError}"
+        throw new Error("loadXML error: #{d.parseError}")
     else if d?.load?
       d.load(str)
     else if d?.parseFromString?
       d = d.parseFromString(str, 'text/xml')
       if d?.getElementsByTagName?('parsererror')?.length > 0 || d?.documentElement?.tagName == 'parsererror'
-        throw "Failed to load document from string:\r\n#{d.documentElement.textContent}"
+        throw new Error("Failed to load document from string:\r\n#{d.documentElement.textContent}")
     return d
 
+  docToStr = (doc) ->
+    xml = doc.xml || new XMLSerializer?()?.serializeToString?(doc)
+    if xml.indexOf("<transformiix::result") >= 0
+      xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"))
+    return xml
 
-  return (xmlStr, xsltStr) ->
+  return (xmlStr, xsltStr, asFullDocument) ->
+    xmlDoc = strToDoc(xmlStr)
+    xsltDoc = strToDoc(xsltStr)
+    return false unless xmlDoc? and xsltDoc?
 
     if XSLTProcessor? and document?.implementation?.createDocument?
       processor = new XSLTProcessor()
+      processor.importStylesheet(xsltDoc)
+      trans = if asFullDocument
+        processor.transformToDocument(xmlDoc)
+      else
+        processor.transformToFragment(xmlDoc, document)
+    else if xmlDoc.transformNode?
+      return xmlDoc.transformNode(xsltDoc)
+    else if activeXSupported
+      xslt = createXSLTemplate()
+      xslt.stylesheet = xsltDoc
+      xslProc = xslt.createProcessor()
+      xslProc.input = xmlDoc
+      xslProc.transform()
+      trans = xslProc.output
+
+    return docToStr(trans)
 
