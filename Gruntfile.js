@@ -142,7 +142,8 @@ module.exports = function (grunt) {
                     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
                     browsers: [
                         'Chrome',
-                        'Firefox'
+                        'Firefox',
+                        'IE'
                     ],
 
                     customLaunchers: {
@@ -280,8 +281,7 @@ module.exports = function (grunt) {
             var browsers = _.union(_.keys(opts.customLaunchers), opts.browsers, [
                 'PhantomJS',
                 'Opera',
-                'Safari',
-                'IE'
+                'Safari'
             ]);
             if (grunt.option('all-bs')) {
                 opts.browsers = _.filter(browsers, function (b) {
