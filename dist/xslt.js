@@ -1,4 +1,4 @@
-/*! xslt v0.2.0+0.master.c96d8e09be2d | (c) 2015 Justin Murray | built on 2015-06-23 */
+/*! xslt v0.2.1+0.master.f254f13fee05 | (c) 2015 Justin Murray | built on 2015-06-23 */
 
 (function() {
   var slice = [].slice;
@@ -145,7 +145,7 @@
       return xml;
     };
     stripDuplicateAttributes = function(node, nodeName, closeTag) {
-      var attrRegex, collection, newStr, parts, val;
+      var attrRegex, collection, key, newStr, parts, val;
       attrRegex = /([a-zA-Z0-9:\-]+)\s*=\s*("[^"]*")/g;
       collection = {};
       parts = attrRegex.exec(node);
@@ -154,7 +154,8 @@
         parts = attrRegex.exec(node);
       }
       newStr = '<' + nodeName;
-      for (val in collection) {
+      for (key in collection) {
+        val = collection[key];
         newStr += ' ' + val;
       }
       newStr += (closeTag || '') + '>';
