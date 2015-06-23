@@ -22,6 +22,7 @@ deploy:
     email: murrayju@addpcs.com
     api_key:
       secure: pxKis/Q588HnyH8Nyrt1N3bCkmOQtudYIfZowVAIy6RQw6yN48vzmTj/D8RmGkJFdFgaz1ofOSgxjAoLr3qj2v7nUgWH323ixMtnAUISaydokE9gFdbjpg7bhxT3dNWwCCv0z3v02xHYWTTFKI1K/9U4guHdvnbSfciW5zjS8gkQ3QilysCB07ipFpXb9f4ZoKlI3+qa/32jiVdUPkIweMlLLXyUqR1PfYRsxpsPaYGRTDIXR5NU0uKJJnUB5qOImef1DociQ5Ahr+kyAP4K9Wnnys5Xe9on7M6k8ITWKbtlWfsbCXW/49oln0v5f/hTDrhTVyPr5bVX6y/whGHaEmWg0FrglYo6vzpL6jJckFyqlH+HKTSpqZZA2xIJGr+YyHJGX9WHXgXF1A44TTnmDqrWapeCYgrjyqp4KbnVZPWP47Bf1KVqp60dNQ3cYDrclgLlDsMlqLgfhj21lHZalUh8rYAPCr5medjNyzL8+3b0dguOo+5kbD+hRNxpgRE0tA9KTf2G5ZVp8f3WLmuZ4q3j9OlTaW8332wPAF7uh9tPIVjuC1vzoj3HKv7SZY5euJquCWwKVRe7ZqrR3+M0KPo9eiCXDyrCEcgC3mmNuD9MgPOI0ilivtK8oTe+llQHcDF0Te38SXzWlEaovdKukjbB+n+yuvTkcyh6IPtfIuE=
+    skip_cleanup: true
     on:
       repo: murrayju/xslt
       tags: true
