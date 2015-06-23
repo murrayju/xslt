@@ -1,4 +1,4 @@
-/*! xslt v0.1.0+0.master.19e7a2057e75 | (c) 2015 Justin Murray | built on 2015-06-23 */
+/*! xslt v0.2.0+0.master.c96d8e09be2d | (c) 2015 Justin Murray | built on 2015-06-23 */
 
 (function() {
   var slice = [].slice;
@@ -12,7 +12,7 @@
       return root != null ? root.xslt = factory() : void 0;
     }
   })(this, function() {
-    var activeXSupported, arrayContains, cleanupXmlNodes, createDomDoc, createXSLTemplate, defaults, docToStr, hasXmlHeader, isXml, manualCreateElement, needsHeader, newDocument, prependHeader, strToDoc, stripAllNamespaces, stripDuplicateAttributes, stripNamespacedNamespace, stripNullNamespaces, stripRedundantNamespaces, tryCreateActiveX, xmlHeader;
+    var activeXSupported, arrayContains, cleanupXmlNodes, createDomDoc, createXSLTemplate, defaults, docToStr, hasXmlHeader, isXml, manualCreateElement, needsHeader, newDocument, prependHeader, strToDoc, stripAllNamespaces, stripDuplicateAttributes, stripHeader, stripNamespacedNamespace, stripNullNamespaces, stripRedundantNamespaces, tryCreateActiveX, xmlHeader;
     isXml = function(str) {
       return /^\s*</.test(str);
     };
@@ -25,6 +25,9 @@
     xmlHeader = '<?xml version="1.0" ?>';
     prependHeader = function(str) {
       return xmlHeader + str;
+    };
+    stripHeader = function(str) {
+      return str.replace(/\s*<\?xml[^<]+/, '');
     };
     activeXSupported = (typeof ActiveXObject !== "undefined" && ActiveXObject !== null) || 'ActiveXObject' in window;
     tryCreateActiveX = function() {
@@ -110,7 +113,7 @@
       if (doc == null) {
         return null;
       }
-      xml = (doc != null ? doc.xml : void 0) || (typeof XMLSerializer === "function" ? (ref = new XMLSerializer()) != null ? typeof ref.serializeToString === "function" ? ref.serializeToString(doc) : void 0 : void 0 : void 0);
+      xml = (typeof doc) === 'string' ? doc : (doc != null ? doc.xml : void 0) || (typeof XMLSerializer === "function" ? (ref = new XMLSerializer()) != null ? typeof ref.serializeToString === "function" ? ref.serializeToString(doc) : void 0 : void 0 : void 0);
       if ((xml != null ? typeof xml.indexOf === "function" ? xml.indexOf("<transformiix::result") : void 0 : void 0) >= 0) {
         xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"));
       }
@@ -195,6 +198,7 @@
     };
     defaults = {
       fullDocument: false,
+      xmlHeaderInOutput: true,
       cleanup: true,
       removeDupNamespace: true,
       removeDupAttrs: true,
@@ -223,7 +227,7 @@
         processor.importStylesheet(xsltDoc);
         trans = opt.fullDocument ? processor.transformToDocument(xmlDoc) : processor.transformToFragment(xmlDoc, document);
       } else if ('transformNode' in xmlDoc) {
-        return xmlDoc.transformNode(xsltDoc);
+        trans = xmlDoc.transformNode(xsltDoc);
       } else if (activeXSupported) {
         xslt = createXSLTemplate();
         xslt.stylesheet = xsltDoc;
@@ -234,6 +238,7 @@
       }
       outStr = docToStr(trans);
       if (opt.cleanup) {
+        outStr = opt.xmlHeaderInOutput && needsHeader(outStr) ? prependHeader(outStr) : stripHeader(outStr);
         outStr = cleanupXmlNodes(outStr, opt);
         if (opt.removeDupNamespace) {
           outStr = stripRedundantNamespaces(outStr);
