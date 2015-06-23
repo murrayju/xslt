@@ -146,6 +146,10 @@ module.exports = function (grunt) {
                     ],
 
                     customLaunchers: {
+                        IE8: {
+                            base: 'IE',
+                            'x-ua-compatible': 'IE=EmulateIE8'
+                        },
                         IE9: {
                             base: 'IE',
                             'x-ua-compatible': 'IE=EmulateIE9'
@@ -182,6 +186,7 @@ module.exports = function (grunt) {
                             version: '9'
                         },
                         sl_ie_8: {
+                            skip: true,
                             base: 'SauceLabs',
                             browserName: 'internet explorer',
                             platform: 'Windows 7',
@@ -285,7 +290,7 @@ module.exports = function (grunt) {
             }
             if (grunt.option('all-sl')) {
                 opts.browsers = _.filter(browsers, function (b) {
-                    return (/^sl_/).test(b);
+                    return (/^sl_/).test(b) && !opts.customLaunchers[b].skip;
                 });
             }
             _.forEach(browsers, function (b) {

@@ -31,7 +31,7 @@ define(['jquery', 'prettydiff'], function ($, prettydiff) {
             context: 1
         });
         var results = $(pretty[0]);
-        var diffInfo = results.eq(11).find('p:nth-child(4)');
+        var diffInfo = results.find('p:nth-child(4)');
         var diffCount = parseInt(diffInfo.contents().eq(2).text());
         var diffLines = parseInt(diffInfo.contents().eq(4).text());
         expect(diffCount).toBe(0);
