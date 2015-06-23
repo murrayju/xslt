@@ -7,7 +7,7 @@
 
 [![Sauce Test Status](https://saucelabs.com/browser-matrix/murrayju_xslt.svg)](https://saucelabs.com/u/murrayju_xslt)
 
-A simple wrapper around browser based xslt. Exposes a nice modern promise based api.
+A simple wrapper around browser based xslt. Includes some cleanup options to help normalize the output across browsers.
 
 ## Quick start
 
@@ -21,5 +21,14 @@ Several options are available to get started:
 ## Example
 
 ```js
-// TODO
+options = {
+  fullDocument: false, // Is the output a complete document, or a fragment?
+  cleanup: true, // false will disable all of the below options
+  removeDupNamespace: true,
+  removeDupAttrs: true,
+  removeNullNamespace: true,
+  removeAllNamespaces: false,
+  removeNamespacedNamespace: true
+};
+outputXmlString = xslt(inputXmlString, xslString, options);
 ```
