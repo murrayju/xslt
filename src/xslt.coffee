@@ -15,6 +15,7 @@
   needsHeader = (str) -> isXml(str) && !hasXmlHeader(str)
   xmlHeader = '<?xml version="1.0" ?>'
   prependHeader = (str) -> xmlHeader + str
+  stripHeader = (str) -> str.replace(/\s*<\?xml[^<]+/, '')
   activeXSupported = ActiveXObject? || 'ActiveXObject' of window
 
   tryCreateActiveX = (objIds...) ->
@@ -83,7 +84,10 @@
 
   docToStr = (doc) ->
     return null unless doc?
-    xml = doc?.xml || new XMLSerializer?()?.serializeToString?(doc)
+    xml = if (typeof doc) == 'string'
+      doc
+    else
+      doc?.xml || new XMLSerializer?()?.serializeToString?(doc)
     if xml?.indexOf?("<transformiix::result") >= 0
       xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"))
     return xml
@@ -143,6 +147,7 @@
 
   defaults =
     fullDocument: false
+    xmlHeaderInOutput: true
     cleanup: true
     removeDupNamespace: true
     removeDupAttrs: true
@@ -167,7 +172,7 @@
       else
         processor.transformToFragment(xmlDoc, document)
     else if 'transformNode' of xmlDoc
-      return xmlDoc.transformNode(xsltDoc)
+      trans = xmlDoc.transformNode(xsltDoc)
     else if activeXSupported
       xslt = createXSLTemplate()
       xslt.stylesheet = xsltDoc
@@ -178,6 +183,10 @@
 
     outStr = docToStr(trans)
     if opt.cleanup
+      outStr = if opt.xmlHeaderInOutput and needsHeader(outStr)
+        prependHeader(outStr)
+      else
+        stripHeader(outStr)
       outStr = cleanupXmlNodes(outStr, opt)
       outStr = stripRedundantNamespaces(outStr) if opt.removeDupNamespace
     return outStr

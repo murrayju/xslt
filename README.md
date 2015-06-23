@@ -23,6 +23,7 @@ Several options are available to get started:
 ```js
 options = {
   fullDocument: false, // Is the output a complete document, or a fragment?
+  xmlHeaderInOutput: true,
   cleanup: true, // false will disable all of the below options
   removeDupNamespace: true,
   removeDupAttrs: true,

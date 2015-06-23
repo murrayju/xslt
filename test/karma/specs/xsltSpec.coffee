@@ -21,3 +21,10 @@ define [
     it 'can do a simple transform', ->
       str = xslt(helloXml, helloXsl, {removeAllNamespaces: true})
       util.xmlDiff(helloOutput, str, true)
+
+    it 'can strip xml header', ->
+      str = xslt(helloXml, helloXsl, {
+        removeAllNamespaces: true
+        xmlHeaderInOutput: false
+      })
+      util.xmlDiff(helloOutput.replace(/\s*<\?xml[^<]+/, ''), str, true)
