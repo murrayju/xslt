@@ -15,6 +15,7 @@
   needsHeader = (str) -> isXml(str) && !hasXmlHeader(str)
   xmlHeader = '<?xml version="1.0" ?>'
   prependHeader = (str) -> xmlHeader + str
+  stripHeader = (str) -> str.replace(/\s*<\?xml[^<]+/, '')
   activeXSupported = ActiveXObject? || 'ActiveXObject' of window
 
   tryCreateActiveX = (objIds...) ->
@@ -81,11 +82,18 @@
         throw new Error("Failed to load document from string:\r\n#{d.documentElement.textContent}")
     return d
 
-  docToStr = (doc) ->
+  docToStr = (doc, opt) ->
     return null unless doc?
-    xml = doc?.xml || new XMLSerializer?()?.serializeToString?(doc)
+    xml = if typeof doc == 'string'
+      doc
+    else
+      doc?.xml || new XMLSerializer?()?.serializeToString?(doc)
     if xml?.indexOf?("<transformiix::result") >= 0
       xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"))
+    if opt.xmlHeaderInOutput
+      xml = prependHeader(xml) if needsHeader(xml)
+    else
+      xml = stripHeader(xml)
     return xml
 
   arrayContains = (arr, val) ->
@@ -143,6 +151,7 @@
 
   defaults =
     fullDocument: false
+    xmlHeaderInOutput: true
     cleanup: true
     removeDupNamespace: true
     removeDupAttrs: true
@@ -167,7 +176,7 @@
       else
         processor.transformToFragment(xmlDoc, document)
     else if 'transformNode' of xmlDoc
-      return xmlDoc.transformNode(xsltDoc)
+      trans = xmlDoc.transformNode(xsltDoc)
     else if activeXSupported
       xslt = createXSLTemplate()
       xslt.stylesheet = xsltDoc
@@ -176,7 +185,7 @@
       xslProc.transform()
       trans = xslProc.output
 
-    outStr = docToStr(trans)
+    outStr = docToStr(trans, opt)
     if opt.cleanup
       outStr = cleanupXmlNodes(outStr, opt)
       outStr = stripRedundantNamespaces(outStr) if opt.removeDupNamespace
