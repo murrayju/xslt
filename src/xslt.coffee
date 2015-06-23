@@ -108,14 +108,14 @@
 
   stripDuplicateAttributes = (node, nodeName, closeTag) ->
     attrRegex = /([a-zA-Z0-9:\-]+)\s*=\s*("[^"]*")/g
-    collection = {};
-    parts = attrRegex.exec(node);
+    collection = {}
+    parts = attrRegex.exec(node)
     while parts
       collection[parts[1]] = parts[0]
       parts = attrRegex.exec(node)
     newStr = '<' + nodeName
     newStr += (' ' + val) for val of collection
-    newStr += (closeTag || '') + '>';
+    newStr += (closeTag || '') + '>'
     return newStr
 
   stripNullNamespaces = (node) -> node.replace(/xmlns\s*=\s*""/gi, '')
