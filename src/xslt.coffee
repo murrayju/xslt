@@ -82,18 +82,14 @@
         throw new Error("Failed to load document from string:\r\n#{d.documentElement.textContent}")
     return d
 
-  docToStr = (doc, opt) ->
+  docToStr = (doc) ->
     return null unless doc?
-    xml = if typeof doc == 'string'
+    xml = if (typeof doc) == 'string'
       doc
     else
       doc?.xml || new XMLSerializer?()?.serializeToString?(doc)
     if xml?.indexOf?("<transformiix::result") >= 0
       xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"))
-    if opt.xmlHeaderInOutput
-      xml = prependHeader(xml) if needsHeader(xml)
-    else
-      xml = stripHeader(xml)
     return xml
 
   arrayContains = (arr, val) ->
@@ -185,8 +181,12 @@
       xslProc.transform()
       trans = xslProc.output
 
-    outStr = docToStr(trans, opt)
+    outStr = docToStr(trans)
     if opt.cleanup
+      outStr = if opt.xmlHeaderInOutput and needsHeader(outStr)
+        prependHeader(outStr)
+      else
+        stripHeader(outStr)
       outStr = cleanupXmlNodes(outStr, opt)
       outStr = stripRedundantNamespaces(outStr) if opt.removeDupNamespace
     return outStr
