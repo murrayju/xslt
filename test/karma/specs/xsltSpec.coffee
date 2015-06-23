@@ -19,5 +19,5 @@ define [
       expect(typeof xslt).toBe('function')
 
     it 'can do a simple transform', ->
-      str = xslt(helloXml, helloXsl, true)
+      str = xslt(helloXml, helloXsl, {removeAllNamespaces: true})
       util.xmlDiff(helloOutput, str, true)

@@ -88,7 +88,73 @@
       xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"))
     return xml
 
-  return (xmlStr, xsltStr, asFullDocument) ->
+  arrayContains = (arr, val) ->
+    for v in arr
+      return true if v == val
+    return false
+
+  # If a ns is defined in the root node, it should not be redefined later
+  stripRedundantNamespaces = (xml) ->
+    # start with the first node
+    matches = xml.match(/^<([a-zA-Z0-9:\-]+)\s(?:\/(?!>)|[^>\/])*(\/?)>/)
+    if matches?.length
+      rootNode = matches[0]
+      rootNamespaces = rootNode.match(/xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g)
+
+      return rootNode + xml.substr(rootNode.length).replace /xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g, (ns) ->
+        return '' if arrayContains(rootNamespaces, ns)
+        return ns
+    return xml
+
+  stripDuplicateAttributes = (node, nodeName, closeTag) ->
+    attrRegex = /([a-zA-Z0-9:\-]+)\s*=\s*("[^"]*")/g
+    collection = {};
+    parts = attrRegex.exec(node);
+    while parts
+      collection[parts[1]] = parts[0]
+      parts = attrRegex.exec(node)
+    newStr = '<' + nodeName
+    newStr += (' ' + val) for val of collection
+    newStr += (closeTag || '') + '>';
+    return newStr
+
+  stripNullNamespaces = (node) -> node.replace(/xmlns\s*=\s*""/gi, '')
+
+  stripAllNamespaces = (node) -> node.replace(/xmlns\s*=\s*"[^"]*"/gi, '')
+
+  # This happens in IE 10
+  stripNamespacedNamespace = (node) ->
+    nums = []
+    node = node.replace /xmlns:NS([0-9]+)=""/gi, (match, num) ->
+      nums.push(num)
+      return ''
+    for num in nums
+      node = node.replace(new RegExp("NS" + num + ":xmlns:", "g"), "xmlns:")
+    return node
+
+  # Combine rules that apply to a single node at a time
+  cleanupXmlNodes = (xml, opt) ->
+    return xml.replace /<([a-zA-Z0-9:\-]+)\s*(?:\/(?!>)|[^>\/])*(\/?)>/g, (node, nodeName, closeTag) ->
+      node = stripNamespacedNamespace(node) if opt.removeNamespacedNamespace
+      node = stripNullNamespaces(node) if opt.removeNullNamespace
+      node = stripAllNamespaces(node) if opt.removeAllNamespaces
+      node = stripDuplicateAttributes(node, nodeName, closeTag) if opt.removeDupAttrs
+      return node
+
+  defaults =
+    fullDocument: false
+    cleanup: true
+    removeDupNamespace: true
+    removeDupAttrs: true
+    removeNullNamespace: true
+    removeAllNamespaces: false
+    removeNamespacedNamespace: true
+
+  return (xmlStr, xsltStr, options) ->
+    opt = {}
+    opt[p] = defaults[p] for p of defaults
+    opt[p] = options[p] for p of options if options?
+
     xmlDoc = strToDoc(xmlStr)
     xsltDoc = strToDoc(xsltStr)
     return false unless xmlDoc? and xsltDoc?
@@ -96,7 +162,7 @@
     if XSLTProcessor? and document?.implementation?.createDocument?
       processor = new XSLTProcessor()
       processor.importStylesheet(xsltDoc)
-      trans = if asFullDocument
+      trans = if opt.fullDocument
         processor.transformToDocument(xmlDoc)
       else
         processor.transformToFragment(xmlDoc, document)
@@ -110,5 +176,9 @@
       xslProc.transform()
       trans = xslProc.output
 
-    return docToStr(trans)
+    outStr = docToStr(trans)
+    if opt.cleanup
+      outStr = cleanupXmlNodes(outStr, opt)
+      outStr = stripRedundantNamespaces(outStr) if opt.removeDupNamespace
+    return outStr
 
