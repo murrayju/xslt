@@ -118,7 +118,7 @@
       collection[parts[1]] = parts[0]
       parts = attrRegex.exec(node)
     newStr = '<' + nodeName
-    newStr += (' ' + val) for val of collection
+    newStr += (' ' + val) for key, val of collection
     newStr += (closeTag || '') + '>'
     return newStr
 
