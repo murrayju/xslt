@@ -138,17 +138,22 @@
 
   # Combine rules that apply to a single node at a time
   cleanupXmlNodes = (xml, opt) ->
-    return xml.replace /<([a-zA-Z0-9:\-]+)\s*(?:\/(?!>)|[^>\/])*(\/?)>/g, (node, nodeName, closeTag) ->
+    return xml.replace /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/gi, (node, nodeName, closeTag) ->
       node = stripNamespacedNamespace(node) if opt.removeNamespacedNamespace
       node = stripNullNamespaces(node) if opt.removeNullNamespace
       node = stripAllNamespaces(node) if opt.removeAllNamespaces
       node = stripDuplicateAttributes(node, nodeName, closeTag) if opt.removeDupAttrs
       return node
 
+  collapseEmptyElements = (xml) ->
+    return xml.replace /(<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)><\/\2>/gi, (all, element) ->
+      return "#{element}/>"
+
   defaults =
     fullDocument: false
     xmlHeaderInOutput: true
     cleanup: true
+    collapseEmptyElements: true
     removeDupNamespace: true
     removeDupAttrs: true
     removeNullNamespace: true
@@ -183,11 +188,10 @@
 
     outStr = docToStr(trans)
     if opt.cleanup
-      outStr = if opt.xmlHeaderInOutput and needsHeader(outStr)
-        prependHeader(outStr)
-      else
-        stripHeader(outStr)
+      outStr = prependHeader(outStr) if opt.xmlHeaderInOutput and needsHeader(outStr)
+      outStr = stripHeader(outStr) unless opt.xmlHeaderInOutput
       outStr = cleanupXmlNodes(outStr, opt)
       outStr = stripRedundantNamespaces(outStr) if opt.removeDupNamespace
+      outStr = collapseEmptyElements(outStr) if opt.collapseEmptyElements
     return outStr
 

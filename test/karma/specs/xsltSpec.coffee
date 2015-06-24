@@ -4,12 +4,20 @@ define [
   'text!/base/test/data/hello.xml'
   'text!/base/test/data/hello.xsl'
   'text!/base/test/data/hello.html'
+
+  'text!/base/test/data/passthrough.xsl'
+  'text!/base/test/data/closingTags-mixture.xml'
+  'text!/base/test/data/closingTags-collapsed.xml'
 ], (
   xslt
   util
   helloXml
   helloXsl
   helloOutput
+
+  passthrough
+  closingMix
+  closingCollapsed
 ) ->
 
   describe 'xslt', ->
@@ -20,11 +28,15 @@ define [
 
     it 'can do a simple transform', ->
       str = xslt(helloXml, helloXsl, {removeAllNamespaces: true})
-      util.xmlDiff(helloOutput, str, true)
+      util.xmlDiff(helloOutput, str)
 
     it 'can strip xml header', ->
       str = xslt(helloXml, helloXsl, {
         removeAllNamespaces: true
         xmlHeaderInOutput: false
       })
-      util.xmlDiff(helloOutput.replace(/\s*<\?xml[^<]+/, ''), str, true)
+      util.xmlDiff(helloOutput.replace(/\s*<\?xml[^<]+/, ''), str)
+
+    it 'can collapse empty tags', ->
+      str = xslt(closingMix, passthrough)
+      util.xmlDiff(closingCollapsed, str)

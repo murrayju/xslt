@@ -25,6 +25,7 @@ options = {
   fullDocument: false, // Is the output a complete document, or a fragment?
   xmlHeaderInOutput: true,
   cleanup: true, // false will disable all of the below options
+  collapseEmptyElements: true, // Forces output of self-closing tags
   removeDupNamespace: true,
   removeDupAttrs: true,
   removeNullNamespace: true,
