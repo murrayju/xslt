@@ -13,9 +13,23 @@
   isXml = (str) -> /^\s*</.test(str)
   hasXmlHeader = (str) -> /^\s*<\?/.test(str)
   needsHeader = (str) -> isXml(str) && !hasXmlHeader(str)
-  xmlHeader = '<?xml version="1.0" ?>'
-  prependHeader = (str) -> xmlHeader + str
+  xmlHeader = (encoding, standalone) ->
+    str = '<?xml version="1.0" '
+    str += "encoding=\"#{encoding}\" " if encoding?
+    str += "standalone=\"#{standalone}\" " if standalone?
+    str += '?>'
+    return str
+  prependHeader = (str, encoding, standalone) -> xmlHeader(encoding, standalone) + str
   stripHeader = (str) -> str.replace(/\s*<\?xml[^<]+/, '')
+  getHeader = (str) ->
+    match = str.match(/^\s*<\?xml\b[^<]+/i)
+    return (match?.length && match[0]?.trim?()) || null
+  getAttrVal = (node, attrName) ->
+    match = (new RegExp('\\b' + attrName + '\\s*=\\s*"([^"]*)"', 'g')).exec(node)
+    return (match?.length > 1 && match[1]) || null
+  getHeaderEncoding = (str) -> getAttrVal(getHeader(str), 'encoding')
+  getHeaderStandalone = (str) -> getAttrVal(getHeader(str), 'standalone')
+
   activeXSupported = ActiveXObject? || 'ActiveXObject' of window
 
   tryCreateActiveX = (objIds...) ->
@@ -50,7 +64,7 @@
 
   manualCreateElement = ->
     xml = document.createElement('xml')
-    xml.src = xmlHeader
+    xml.src = xmlHeader()
     document.body.appendChild(xml)
     res = xml.XMLDocument
     document.body.removeChild(xml)
@@ -138,17 +152,25 @@
 
   # Combine rules that apply to a single node at a time
   cleanupXmlNodes = (xml, opt) ->
-    return xml.replace /<([a-zA-Z0-9:\-]+)\s*(?:\/(?!>)|[^>\/])*(\/?)>/g, (node, nodeName, closeTag) ->
+    return xml.replace /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/gi, (node, nodeName, closeTag) ->
       node = stripNamespacedNamespace(node) if opt.removeNamespacedNamespace
       node = stripNullNamespaces(node) if opt.removeNullNamespace
       node = stripAllNamespaces(node) if opt.removeAllNamespaces
       node = stripDuplicateAttributes(node, nodeName, closeTag) if opt.removeDupAttrs
       return node
 
+  collapseEmptyElements = (xml) ->
+    return xml.replace /(<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)><\/\2>/gi, (all, element) ->
+      return "#{element}/>"
+
   defaults =
     fullDocument: false
-    xmlHeaderInOutput: true
     cleanup: true
+    xmlHeaderInOutput: true
+    normalizeHeader: true
+    encoding: 'UTF-8'
+    preserveEncoding: false
+    collapseEmptyElements: true
     removeDupNamespace: true
     removeDupAttrs: true
     removeNullNamespace: true
@@ -183,11 +205,15 @@
 
     outStr = docToStr(trans)
     if opt.cleanup
-      outStr = if opt.xmlHeaderInOutput and needsHeader(outStr)
-        prependHeader(outStr)
+      encoding = if opt.preserveEncoding
+        getHeaderEncoding(outStr) || getHeaderEncoding(xmlStr)
       else
-        stripHeader(outStr)
+        opt.encoding
+      standalone = getHeaderStandalone(outStr)
+      outStr = stripHeader(outStr) if opt.normalizeHeader or !opt.xmlHeaderInOutput
+      outStr = prependHeader(outStr, encoding, standalone) if opt.xmlHeaderInOutput and needsHeader(outStr)
       outStr = cleanupXmlNodes(outStr, opt)
       outStr = stripRedundantNamespaces(outStr) if opt.removeDupNamespace
+      outStr = collapseEmptyElements(outStr) if opt.collapseEmptyElements
     return outStr
 

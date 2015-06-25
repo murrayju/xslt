@@ -1,4 +1,4 @@
-/*! xslt v0.2.1+0.master.f254f13fee05 | (c) 2015 Justin Murray | built on 2015-06-23 */
+/*! xslt v0.3.0+0.master.d84bbe51c5d5 | (c) 2015 Justin Murray | built on 2015-06-25 */
 
 (function() {
   var slice = [].slice;
@@ -12,7 +12,7 @@
       return root != null ? root.xslt = factory() : void 0;
     }
   })(this, function() {
-    var activeXSupported, arrayContains, cleanupXmlNodes, createDomDoc, createXSLTemplate, defaults, docToStr, hasXmlHeader, isXml, manualCreateElement, needsHeader, newDocument, prependHeader, strToDoc, stripAllNamespaces, stripDuplicateAttributes, stripHeader, stripNamespacedNamespace, stripNullNamespaces, stripRedundantNamespaces, tryCreateActiveX, xmlHeader;
+    var activeXSupported, arrayContains, cleanupXmlNodes, collapseEmptyElements, createDomDoc, createXSLTemplate, defaults, docToStr, getAttrVal, getHeader, getHeaderEncoding, getHeaderStandalone, hasXmlHeader, isXml, manualCreateElement, needsHeader, newDocument, prependHeader, strToDoc, stripAllNamespaces, stripDuplicateAttributes, stripHeader, stripNamespacedNamespace, stripNullNamespaces, stripRedundantNamespaces, tryCreateActiveX, xmlHeader;
     isXml = function(str) {
       return /^\s*</.test(str);
     };
@@ -22,12 +22,39 @@
     needsHeader = function(str) {
       return isXml(str) && !hasXmlHeader(str);
     };
-    xmlHeader = '<?xml version="1.0" ?>';
-    prependHeader = function(str) {
-      return xmlHeader + str;
+    xmlHeader = function(encoding, standalone) {
+      var str;
+      str = '<?xml version="1.0" ';
+      if (encoding != null) {
+        str += "encoding=\"" + encoding + "\" ";
+      }
+      if (standalone != null) {
+        str += "standalone=\"" + standalone + "\" ";
+      }
+      str += '?>';
+      return str;
+    };
+    prependHeader = function(str, encoding, standalone) {
+      return xmlHeader(encoding, standalone) + str;
     };
     stripHeader = function(str) {
       return str.replace(/\s*<\?xml[^<]+/, '');
+    };
+    getHeader = function(str) {
+      var match, ref;
+      match = str.match(/^\s*<\?xml\b[^<]+/i);
+      return ((match != null ? match.length : void 0) && ((ref = match[0]) != null ? typeof ref.trim === "function" ? ref.trim() : void 0 : void 0)) || null;
+    };
+    getAttrVal = function(node, attrName) {
+      var match;
+      match = (new RegExp('\\b' + attrName + '\\s*=\\s*"([^"]*)"', 'g')).exec(node);
+      return ((match != null ? match.length : void 0) > 1 && match[1]) || null;
+    };
+    getHeaderEncoding = function(str) {
+      return getAttrVal(getHeader(str), 'encoding');
+    };
+    getHeaderStandalone = function(str) {
+      return getAttrVal(getHeader(str), 'standalone');
     };
     activeXSupported = (typeof ActiveXObject !== "undefined" && ActiveXObject !== null) || 'ActiveXObject' in window;
     tryCreateActiveX = function() {
@@ -61,7 +88,7 @@
     manualCreateElement = function() {
       var res, xml;
       xml = document.createElement('xml');
-      xml.src = xmlHeader;
+      xml.src = xmlHeader();
       document.body.appendChild(xml);
       res = xml.XMLDocument;
       document.body.removeChild(xml);
@@ -181,7 +208,7 @@
       return node;
     };
     cleanupXmlNodes = function(xml, opt) {
-      return xml.replace(/<([a-zA-Z0-9:\-]+)\s*(?:\/(?!>)|[^>\/])*(\/?)>/g, function(node, nodeName, closeTag) {
+      return xml.replace(/<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/gi, function(node, nodeName, closeTag) {
         if (opt.removeNamespacedNamespace) {
           node = stripNamespacedNamespace(node);
         }
@@ -197,10 +224,19 @@
         return node;
       });
     };
+    collapseEmptyElements = function(xml) {
+      return xml.replace(/(<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)><\/\2>/gi, function(all, element) {
+        return element + "/>";
+      });
+    };
     defaults = {
       fullDocument: false,
-      xmlHeaderInOutput: true,
       cleanup: true,
+      xmlHeaderInOutput: true,
+      normalizeHeader: true,
+      encoding: 'UTF-8',
+      preserveEncoding: false,
+      collapseEmptyElements: true,
       removeDupNamespace: true,
       removeDupAttrs: true,
       removeNullNamespace: true,
@@ -208,7 +244,7 @@
       removeNamespacedNamespace: true
     };
     return function(xmlStr, xsltStr, options) {
-      var opt, outStr, p, processor, ref, trans, xmlDoc, xslProc, xslt, xsltDoc;
+      var encoding, opt, outStr, p, processor, ref, standalone, trans, xmlDoc, xslProc, xslt, xsltDoc;
       opt = {};
       for (p in defaults) {
         opt[p] = defaults[p];
@@ -239,10 +275,20 @@
       }
       outStr = docToStr(trans);
       if (opt.cleanup) {
-        outStr = opt.xmlHeaderInOutput && needsHeader(outStr) ? prependHeader(outStr) : stripHeader(outStr);
+        encoding = opt.preserveEncoding ? getHeaderEncoding(outStr) || getHeaderEncoding(xmlStr) : opt.encoding;
+        standalone = getHeaderStandalone(outStr);
+        if (opt.normalizeHeader || !opt.xmlHeaderInOutput) {
+          outStr = stripHeader(outStr);
+        }
+        if (opt.xmlHeaderInOutput && needsHeader(outStr)) {
+          outStr = prependHeader(outStr, encoding, standalone);
+        }
         outStr = cleanupXmlNodes(outStr, opt);
         if (opt.removeDupNamespace) {
           outStr = stripRedundantNamespaces(outStr);
+        }
+        if (opt.collapseEmptyElements) {
+          outStr = collapseEmptyElements(outStr);
         }
       }
       return outStr;

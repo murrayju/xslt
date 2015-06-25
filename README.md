@@ -21,10 +21,15 @@ Several options are available to get started:
 ## Example
 
 ```js
+// Here are the options with their default values
 options = {
   fullDocument: false, // Is the output a complete document, or a fragment?
-  xmlHeaderInOutput: true,
   cleanup: true, // false will disable all of the below options
+  xmlHeaderInOutput: true,
+  normalizeHeader: true,
+  encoding: 'UTF-8',
+  preserveEncoding: false, // When false, always uses the above encoding. When true, keeps whatever the doc says
+  collapseEmptyElements: true, // Forces output of self-closing tags
   removeDupNamespace: true,
   removeDupAttrs: true,
   removeNullNamespace: true,
