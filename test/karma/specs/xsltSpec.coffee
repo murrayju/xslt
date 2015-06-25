@@ -2,6 +2,7 @@ define [
   'cs!xslt'
   '/base/test/karma/testUtil.js'
   'text!/base/test/data/hello.xml'
+  'text!/base/test/data/helloAscii.xml'
   'text!/base/test/data/hello.xsl'
   'text!/base/test/data/hello.html'
 
@@ -12,6 +13,7 @@ define [
   xslt
   util
   helloXml
+  helloXmlAsc
   helloXsl
   helloOutput
 
@@ -40,3 +42,7 @@ define [
     it 'can collapse empty tags', ->
       str = xslt(closingMix, passthrough)
       util.xmlDiff(closingCollapsed, str)
+
+    it 'can preserve encoding', ->
+      str = xslt(helloXmlAsc, passthrough, {preserveEncoding: true})
+      util.xmlDiff(helloXmlAsc, str)

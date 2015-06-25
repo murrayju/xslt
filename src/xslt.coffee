@@ -13,9 +13,23 @@
   isXml = (str) -> /^\s*</.test(str)
   hasXmlHeader = (str) -> /^\s*<\?/.test(str)
   needsHeader = (str) -> isXml(str) && !hasXmlHeader(str)
-  xmlHeader = '<?xml version="1.0" ?>'
-  prependHeader = (str) -> xmlHeader + str
+  xmlHeader = (encoding, standalone) ->
+    str = '<?xml version="1.0" '
+    str += "encoding=\"#{encoding}\" " if encoding?
+    str += "standalone=\"#{standalone}\" " if standalone?
+    str += '?>'
+    return str
+  prependHeader = (str, encoding, standalone) -> xmlHeader(encoding, standalone) + str
   stripHeader = (str) -> str.replace(/\s*<\?xml[^<]+/, '')
+  getHeader = (str) ->
+    match = str.match(/^\s*<\?xml\b[^<]+/i)
+    return (match?.length && match[0]?.trim?()) || null
+  getAttrVal = (node, attrName) ->
+    match = (new RegExp('\\b' + attrName + '\\s*=\\s*"([^"]*)"', 'g')).exec(node)
+    return (match?.length > 1 && match[1]) || null
+  getHeaderEncoding = (str) -> getAttrVal(getHeader(str), 'encoding')
+  getHeaderStandalone = (str) -> getAttrVal(getHeader(str), 'standalone')
+
   activeXSupported = ActiveXObject? || 'ActiveXObject' of window
 
   tryCreateActiveX = (objIds...) ->
@@ -50,7 +64,7 @@
 
   manualCreateElement = ->
     xml = document.createElement('xml')
-    xml.src = xmlHeader
+    xml.src = xmlHeader()
     document.body.appendChild(xml)
     res = xml.XMLDocument
     document.body.removeChild(xml)
@@ -151,8 +165,11 @@
 
   defaults =
     fullDocument: false
-    xmlHeaderInOutput: true
     cleanup: true
+    xmlHeaderInOutput: true
+    normalizeHeader: true
+    encoding: 'UTF-8'
+    preserveEncoding: false
     collapseEmptyElements: true
     removeDupNamespace: true
     removeDupAttrs: true
@@ -188,8 +205,13 @@
 
     outStr = docToStr(trans)
     if opt.cleanup
-      outStr = prependHeader(outStr) if opt.xmlHeaderInOutput and needsHeader(outStr)
-      outStr = stripHeader(outStr) unless opt.xmlHeaderInOutput
+      encoding = if opt.preserveEncoding
+        getHeaderEncoding(outStr) || getHeaderEncoding(xmlStr)
+      else
+        opt.encoding
+      standalone = getHeaderStandalone(outStr)
+      outStr = stripHeader(outStr) if opt.normalizeHeader or !opt.xmlHeaderInOutput
+      outStr = prependHeader(outStr, encoding, standalone) if opt.xmlHeaderInOutput and needsHeader(outStr)
       outStr = cleanupXmlNodes(outStr, opt)
       outStr = stripRedundantNamespaces(outStr) if opt.removeDupNamespace
       outStr = collapseEmptyElements(outStr) if opt.collapseEmptyElements
