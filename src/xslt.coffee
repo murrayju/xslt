@@ -20,9 +20,9 @@
     str += '?>'
     return str
   prependHeader = (str, encoding, standalone) -> xmlHeader(encoding, standalone) + str
-  stripHeader = (str) -> str.replace(/\s*<\?xml[^<]+/, '')
+  stripHeader = (str) -> str?.replace(/\s*<\?xml[^<]+/, '')
   getHeader = (str) ->
-    match = str.match(/^\s*<\?xml\b[^<]+/i)
+    match = str?.match(/^\s*<\?xml\b[^<]+/i)
     return (match?.length && match[0]?.trim?()) || null
   getAttrVal = (node, attrName) ->
     match = (new RegExp('\\b' + attrName + '\\s*=\\s*"([^"]*)"', 'g')).exec(node)
@@ -91,7 +91,7 @@
     else if d? and 'load' of d
       d.load(str)
     else if DOMParser?
-      d = (new DOMParser?())?.parseFromString?(str, 'text/xml')
+      d = (new DOMParser())?.parseFromString?(str, 'text/xml')
       if d?.getElementsByTagName?('parsererror')?.length > 0 || d?.documentElement?.nodeName == 'parsererror'
         throw new Error("Failed to load document from string:\r\n#{d.documentElement.textContent}")
     return d
@@ -100,8 +100,12 @@
     return null unless doc?
     xml = if (typeof doc) == 'string'
       doc
+    else if doc?.xml?
+      doc.xml
+    else if XMLSerializer?
+      (new XMLSerializer())?.serializeToString?(doc)
     else
-      doc?.xml || new XMLSerializer?()?.serializeToString?(doc)
+      null
     if xml?.indexOf?("<transformiix::result") >= 0
       xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"))
     return xml
@@ -114,7 +118,7 @@
   # If a ns is defined in the root node, it should not be redefined later
   stripRedundantNamespaces = (xml) ->
     # start with the first node
-    matches = xml.match(/^<([a-zA-Z0-9:\-]+)\s(?:\/(?!>)|[^>\/])*(\/?)>/)
+    matches = xml?.match(/^<([a-zA-Z0-9:\-]+)\s(?:\/(?!>)|[^>\/])*(\/?)>/)
     if matches?.length
       rootNode = matches[0]
       rootNamespaces = rootNode.match(/xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g)
@@ -152,7 +156,7 @@
 
   # Combine rules that apply to a single node at a time
   cleanupXmlNodes = (xml, opt) ->
-    return xml.replace /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/gi, (node, nodeName, closeTag) ->
+    return xml?.replace /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/gi, (node, nodeName, closeTag) ->
       node = stripNamespacedNamespace(node) if opt.removeNamespacedNamespace
       node = stripNullNamespaces(node) if opt.removeNullNamespace
       node = stripAllNamespaces(node) if opt.removeAllNamespaces
@@ -160,7 +164,7 @@
       return node
 
   collapseEmptyElements = (xml) ->
-    return xml.replace /(<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)><\/\2>/gi, (all, element) ->
+    return xml?.replace /(<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)><\/\2>/gi, (all, element) ->
       return "#{element}/>"
 
   defaults =
