@@ -168,6 +168,12 @@ module.exports = function (grunt) {
                             base: 'SauceLabs',
                             browserName: 'firefox'
                         },
+                        sl_safari: {
+                            base: 'SauceLabs',
+                            browserName: 'safari',
+                            platform: 'OS X 10.10',
+                            version: '8.0'
+                        },
                         sl_ie_11: {
                             base: 'SauceLabs',
                             browserName: 'internet explorer',
