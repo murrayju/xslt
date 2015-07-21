@@ -112,7 +112,7 @@ module.exports = function (grunt) {
                     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
                     reporters: ['dots', 'junit', 'coverage', 'saucelabs'],
                     junitReporter: {
-                        outputFile: 'reports/karma-results.xml'
+                        outputDir: 'reports/karma'
                     },
                     coverageReporter: {
                         instrumenters: { ibrik : require('ibrik') },
@@ -167,6 +167,12 @@ module.exports = function (grunt) {
                         sl_firefox: {
                             base: 'SauceLabs',
                             browserName: 'firefox'
+                        },
+                        sl_safari: {
+                            base: 'SauceLabs',
+                            browserName: 'safari',
+                            platform: 'OS X 10.10',
+                            version: '8.0'
                         },
                         sl_ie_11: {
                             base: 'SauceLabs',

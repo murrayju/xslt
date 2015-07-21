@@ -1,4 +1,4 @@
-/*! xslt v0.3.0+0.master.d84bbe51c5d5 | (c) 2015 Justin Murray | built on 2015-06-25 */
+/*! xslt v0.4.0+0.master.ba4530b72c4a | (c) 2015 Justin Murray | built on 2015-07-21 */
 
 (function() {
   var slice = [].slice;
@@ -38,11 +38,11 @@
       return xmlHeader(encoding, standalone) + str;
     };
     stripHeader = function(str) {
-      return str.replace(/\s*<\?xml[^<]+/, '');
+      return str != null ? str.replace(/\s*<\?xml[^<]+/, '') : void 0;
     };
     getHeader = function(str) {
       var match, ref;
-      match = str.match(/^\s*<\?xml\b[^<]+/i);
+      match = str != null ? str.match(/^\s*<\?xml\b[^<]+/i) : void 0;
       return ((match != null ? match.length : void 0) && ((ref = match[0]) != null ? typeof ref.trim === "function" ? ref.trim() : void 0 : void 0)) || null;
     };
     getAttrVal = function(node, attrName) {
@@ -128,7 +128,7 @@
       } else if ((d != null) && 'load' in d) {
         d.load(str);
       } else if (typeof DOMParser !== "undefined" && DOMParser !== null) {
-        d = (ref1 = typeof DOMParser === "function" ? new DOMParser() : void 0) != null ? typeof ref1.parseFromString === "function" ? ref1.parseFromString(str, 'text/xml') : void 0 : void 0;
+        d = (ref1 = new DOMParser()) != null ? typeof ref1.parseFromString === "function" ? ref1.parseFromString(str, 'text/xml') : void 0 : void 0;
         if ((d != null ? typeof d.getElementsByTagName === "function" ? (ref2 = d.getElementsByTagName('parsererror')) != null ? ref2.length : void 0 : void 0 : void 0) > 0 || (d != null ? (ref3 = d.documentElement) != null ? ref3.nodeName : void 0 : void 0) === 'parsererror') {
           throw new Error("Failed to load document from string:\r\n" + d.documentElement.textContent);
         }
@@ -140,7 +140,7 @@
       if (doc == null) {
         return null;
       }
-      xml = (typeof doc) === 'string' ? doc : (doc != null ? doc.xml : void 0) || (typeof XMLSerializer === "function" ? (ref = new XMLSerializer()) != null ? typeof ref.serializeToString === "function" ? ref.serializeToString(doc) : void 0 : void 0 : void 0);
+      xml = (typeof doc) === 'string' ? doc : (doc != null ? doc.xml : void 0) != null ? doc.xml : typeof XMLSerializer !== "undefined" && XMLSerializer !== null ? (ref = new XMLSerializer()) != null ? typeof ref.serializeToString === "function" ? ref.serializeToString(doc) : void 0 : void 0 : null;
       if ((xml != null ? typeof xml.indexOf === "function" ? xml.indexOf("<transformiix::result") : void 0 : void 0) >= 0) {
         xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"));
       }
@@ -158,7 +158,7 @@
     };
     stripRedundantNamespaces = function(xml) {
       var matches, rootNamespaces, rootNode;
-      matches = xml.match(/^<([a-zA-Z0-9:\-]+)\s(?:\/(?!>)|[^>\/])*(\/?)>/);
+      matches = xml != null ? xml.match(/^<([a-zA-Z0-9:\-]+)\s(?:\/(?!>)|[^>\/])*(\/?)>/) : void 0;
       if (matches != null ? matches.length : void 0) {
         rootNode = matches[0];
         rootNamespaces = rootNode.match(/xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g);
@@ -208,7 +208,7 @@
       return node;
     };
     cleanupXmlNodes = function(xml, opt) {
-      return xml.replace(/<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/gi, function(node, nodeName, closeTag) {
+      return xml != null ? xml.replace(/<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/gi, function(node, nodeName, closeTag) {
         if (opt.removeNamespacedNamespace) {
           node = stripNamespacedNamespace(node);
         }
@@ -222,12 +222,12 @@
           node = stripDuplicateAttributes(node, nodeName, closeTag);
         }
         return node;
-      });
+      }) : void 0;
     };
     collapseEmptyElements = function(xml) {
-      return xml.replace(/(<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)><\/\2>/gi, function(all, element) {
+      return xml != null ? xml.replace(/(<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)><\/\2>/gi, function(all, element) {
         return element + "/>";
-      });
+      }) : void 0;
     };
     defaults = {
       fullDocument: false,

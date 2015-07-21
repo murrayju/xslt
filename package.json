@@ -54,5 +54,5 @@
   "engines": {
     "node": ">=0.10.33"
   },
-  "version": "0.3.0+0.master.d84bbe51c5d5"
+  "version": "0.4.0+0.master.ba4530b72c4a"
 }
