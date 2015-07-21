@@ -112,7 +112,7 @@ module.exports = function (grunt) {
                     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
                     reporters: ['dots', 'junit', 'coverage', 'saucelabs'],
                     junitReporter: {
-                        outputFile: 'reports/karma-results.xml'
+                        outputDir: 'reports/karma'
                     },
                     coverageReporter: {
                         instrumenters: { ibrik : require('ibrik') },
