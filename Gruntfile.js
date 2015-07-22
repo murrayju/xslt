@@ -343,6 +343,11 @@ module.exports = function (grunt) {
                 opts.preprocessors = [];
             }
 
+            var timeout = grunt.option('captureTimeout');
+            if (timeout) {
+                opts.captureTimeout = parseInt(timeout, 10);
+            }
+
             grunt.config.set('karma.app.options', opts);
 
             grunt.task.run('karma');
