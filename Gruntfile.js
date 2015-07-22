@@ -159,12 +159,22 @@ module.exports = function (grunt) {
                             base: 'IE',
                             'x-ua-compatible': 'IE=EmulateIE10'
                         },
-                        sl_chrome: {
+                        sl_chrome_win: {
                             base: 'SauceLabs',
                             browserName: 'chrome',
                             platform: 'Windows 7'
                         },
-                        sl_firefox: {
+                        sl_chrome_mac: {
+                            base: 'SauceLabs',
+                            browserName: 'chrome',
+                            platform: 'OS X 10.10'
+                        },
+                        sl_chrome_linux: {
+                            base: 'SauceLabs',
+                            browserName: 'chrome',
+                            platform: 'Linux'
+                        },
+                        sl_firefox_win: {
                             base: 'SauceLabs',
                             browserName: 'firefox'
                         },
@@ -173,6 +183,22 @@ module.exports = function (grunt) {
                             browserName: 'safari',
                             platform: 'OS X 10.10',
                             version: '8.0'
+                        },
+                        sl_ios: {
+                            base: 'SauceLabs',
+                            browserName: 'iphone',
+                            version: '8.2',
+                            platform: 'OS X 10.10',
+                            deviceName: 'iPhone Simulator',
+                            deviceOrientation: 'portrait'
+                        },
+                        sl_android: {
+                            base: 'SauceLabs',
+                            browserName: 'android',
+                            version: '5.1',
+                            platform: 'Linux',
+                            deviceName: 'Android Emulator',
+                            deviceOrientation: 'portrait'
                         },
                         sl_ie_11: {
                             base: 'SauceLabs',
