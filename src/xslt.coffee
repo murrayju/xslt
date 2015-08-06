@@ -187,8 +187,9 @@
     opt[p] = options[p] for p of options if options?
 
     xmlDoc = strToDoc(xmlStr)
+    throw new Error('Failed to load the XML document') unless xmlDoc?
     xsltDoc = strToDoc(xsltStr)
-    return false unless xmlDoc? and xsltDoc?
+    throw new Error('Failed to load the XSLT document') unless xsltDoc?
 
     if XSLTProcessor? and document?.implementation?.createDocument?
       processor = new XSLTProcessor()

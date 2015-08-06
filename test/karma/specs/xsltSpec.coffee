@@ -46,3 +46,19 @@ define [
     it 'can preserve encoding', ->
       str = xslt(helloXmlAsc, passthrough, {preserveEncoding: true})
       util.xmlDiff(helloXmlAsc, str)
+
+    it 'throws on invalid xml', ->
+      try
+        ret = xslt('something invalid', helloXsl)
+        expect(ret).toBe('should not get here')
+      catch err
+        expect(err).toBeDefined()
+        expect(err.message).toMatch(/XML/)
+
+    it 'throws on invalid xslt', ->
+      try
+        ret = xslt(helloXml, 'something invalid')
+        expect(ret).toBe('should not get here')
+      catch err
+        expect(err).toBeDefined()
+        expect(err.message).toMatch(/XSLT/)
