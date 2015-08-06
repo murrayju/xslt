@@ -1,4 +1,4 @@
-/*! xslt v0.4.0+0.master.ba4530b72c4a | (c) 2015 Justin Murray | built on 2015-07-21 */
+/*! xslt v0.5.0+0.master.5b6e912447a1 | (c) 2015 Justin Murray | built on 2015-08-06 */
 
 (function() {
   var slice = [].slice;
@@ -255,9 +255,12 @@
         }
       }
       xmlDoc = strToDoc(xmlStr);
+      if (xmlDoc == null) {
+        throw new Error('Failed to load the XML document');
+      }
       xsltDoc = strToDoc(xsltStr);
-      if (!((xmlDoc != null) && (xsltDoc != null))) {
-        return false;
+      if (xsltDoc == null) {
+        throw new Error('Failed to load the XSLT document');
       }
       if ((typeof XSLTProcessor !== "undefined" && XSLTProcessor !== null) && ((typeof document !== "undefined" && document !== null ? (ref = document.implementation) != null ? ref.createDocument : void 0 : void 0) != null)) {
         processor = new XSLTProcessor();
