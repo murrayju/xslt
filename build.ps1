@@ -1,5 +1,5 @@
-$nodeVersion = "0.12.2"
-$npmVersion = "2.7.6"
+$nodeVersion = "4.2.1"
+$npmVersion = "3.3.8"
 $downloadDir = Join-Path (pwd) "download"
 
 $x64 = [IntPtr]::Size -eq 8

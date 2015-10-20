@@ -1,6 +1,6 @@
 #!/bin/bash
 
-nodeVersion=0.12.2
+nodeVersion=4.2.1
 downloadDir=`pwd`/download
 mkdir -p $downloadDir
 
