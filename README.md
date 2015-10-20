@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/xslt.svg)](https://www.npmjs.com/package/xslt)
 [![Build Status](https://travis-ci.org/murrayju/xslt.svg?branch=master)](https://travis-ci.org/murrayju/xslt)
 [![Coverage Status](https://coveralls.io/repos/murrayju/xslt/badge.svg)](https://coveralls.io/r/murrayju/xslt)
-[![devDependency Status](https://img.shields.io/david/dev/murrayju/xslt.svg)](https://david-dm.org/murrayju/xslt#info=devDependencies)
+[![devDependency Status](https://david-dm.org/murrayju/xslt/dev-status.svg)](https://david-dm.org/murrayju/xslt#info=devDependencies)
 
 [![Sauce Test Status](https://saucelabs.com/browser-matrix/murrayju_xslt.svg)](https://saucelabs.com/u/murrayju_xslt)
 
