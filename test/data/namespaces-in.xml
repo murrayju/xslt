@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<hello-world xmlns="urn:test:ns1" test-someRootAttr="This should pull up the ns2 declaration">
+	<greeter test-someAttr="This goes into some other namespace">An XSLT Programmer</greeter>
+	<greeting otherAttr="This stays in the default namespace">Hello, World!</greeting>
+</hello-world>
