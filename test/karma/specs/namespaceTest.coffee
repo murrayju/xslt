@@ -12,7 +12,7 @@ define [
   xmlOut
 ) ->
 
-  fdescribe 'namespaces', ->
+  describe 'namespaces', ->
 
     it 'should be applied to attributes', ->
       str = xslt(xmlIn, xsl)
