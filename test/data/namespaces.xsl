@@ -10,7 +10,7 @@
 	</xsl:template>
 
 	<xsl:template match="@*[starts-with(local-name(), 'test-')]">
-		<xsl:attribute name="ns2:{substring-after(local-name(), '-')}">
+		<xsl:attribute name="ns2:{substring-after(local-name(), '-')}" namespace="urn:test:ns2">
 			<xsl:value-of select="."/>
 		</xsl:attribute>
 	</xsl:template>
