@@ -26,6 +26,7 @@ define [
 
     it 'should exist', () ->
       expect(xslt).toBeDefined()
+      expect(xslt.cleanup).toBeDefined()
       expect(typeof xslt).toBe('function')
 
     it 'can do a simple transform', ->
@@ -41,6 +42,12 @@ define [
 
     it 'can collapse empty tags', ->
       str = xslt(closingMix, passthrough)
+      util.xmlDiff(closingCollapsed, str)
+
+    it 'can do cleanup as a separate step', ->
+      str = xslt(closingMix, passthrough, {cleanup: false})
+      str = xslt.cleanup(str)
+      expect(str).not.toMatch(/<\/rabbit>/)
       util.xmlDiff(closingCollapsed, str)
 
     it 'can preserve encoding', ->

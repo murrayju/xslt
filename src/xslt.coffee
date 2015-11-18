@@ -181,10 +181,14 @@
     removeAllNamespaces: false
     removeNamespacedNamespace: true
 
-  return (xmlStr, xsltStr, options) ->
+  loadOptions = (options) ->
     opt = {}
     opt[p] = defaults[p] for p of defaults
     opt[p] = options[p] for p of options if options?
+    return opt
+
+  $xslt = (xmlStr, xsltStr, options) ->
+    opt = loadOptions(options)
 
     xmlDoc = strToDoc(xmlStr)
     throw new Error('Failed to load the XML document') unless xmlDoc?
@@ -209,16 +213,23 @@
       trans = xslProc.output
 
     outStr = docToStr(trans)
-    if opt.cleanup
-      encoding = if opt.preserveEncoding
-        getHeaderEncoding(outStr) || getHeaderEncoding(xmlStr)
-      else
-        opt.encoding
-      standalone = getHeaderStandalone(outStr)
-      outStr = stripHeader(outStr) if opt.normalizeHeader or !opt.xmlHeaderInOutput
-      outStr = prependHeader(outStr, encoding, standalone) if opt.xmlHeaderInOutput and needsHeader(outStr)
-      outStr = cleanupXmlNodes(outStr, opt)
-      outStr = stripRedundantNamespaces(outStr) if opt.removeDupNamespace
-      outStr = collapseEmptyElements(outStr) if opt.collapseEmptyElements
+    if opt.preserveEncoding
+      opt.encoding = getHeaderEncoding(outStr) || getHeaderEncoding(xmlStr) || opt.encoding
+    outStr = $xslt.cleanup(outStr, opt) if opt.cleanup
     return outStr
 
+  $xslt.cleanup = (outStr, options) ->
+    opt = loadOptions(options)
+    return unless opt.cleanup
+
+    if opt.preserveEncoding
+      opt.encoding = getHeaderEncoding(outStr) || opt.encoding
+    standalone = getHeaderStandalone(outStr)
+    outStr = stripHeader(outStr) if opt.normalizeHeader or !opt.xmlHeaderInOutput
+    outStr = prependHeader(outStr, opt.encoding, standalone) if opt.xmlHeaderInOutput and needsHeader(outStr)
+    outStr = cleanupXmlNodes(outStr, opt)
+    outStr = stripRedundantNamespaces(outStr) if opt.removeDupNamespace
+    outStr = collapseEmptyElements(outStr) if opt.collapseEmptyElements
+    return outStr
+
+  return $xslt

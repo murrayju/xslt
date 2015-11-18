@@ -38,3 +38,8 @@ options = {
 };
 outputXmlString = xslt(inputXmlString, xslString, options);
 ```
+
+It is also possible to just run the cleanup function itself. This uses the same `options` as above.
+```js
+outputXmlString = xslt.cleanup(intermediateXmlString, options);
+```
