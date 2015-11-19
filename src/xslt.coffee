@@ -115,29 +115,17 @@
       xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"))
     return xml
 
-  # If a ns is defined in the root node, it should not be redefined later
-  stripRedundantNamespaces = (xml) ->
-    # start with the first node
+  getRootNamespaces = (xml) ->
     matches = xml?.match(regex.xmlNode())
-    return xml unless matches?.length
+    return null unless matches?.length
+    matches[0].match(regex.namespaces())
 
-    rootNode = matches[0]
-    rootNamespaces = rootNode.match(regex.namespaces())
-    return xml unless rootNamespaces?.length
-
-    offset = xml.indexOf(rootNode)
-    start = xml.substring(0, offset + rootNode.length)
-    remainder = xml.substring(offset + rootNode.length)
-    return start + remainder.replace regex.namespaces(), (ns) ->
-      return '' if ns in rootNamespaces
-      return ns
-
-  stripDuplicateAttributes = (node, nodeName, closeTag) ->
+  stripDuplicateAttributes = (node, nodeName, closeTag, blacklist=[]) ->
     attrRegex = /([a-zA-Z0-9:\-]+)\s*=\s*("[^"]*")/g
     collection = {}
     parts = attrRegex.exec(node)
     while parts
-      collection[parts[1]] = parts[0]
+      collection[parts[1]] = parts[0] unless parts[0] in blacklist
       parts = attrRegex.exec(node)
     newStr = '<' + nodeName
     newStr += (' ' + val) for key, val of collection
@@ -160,11 +148,18 @@
 
   # Combine rules that apply to a single node at a time
   cleanupXmlNodes = (xml, opt) ->
+    rootNamespaces = if opt.removeDupNamespace then getRootNamespaces(xml) else []
+    isRootNode = true
     return xml?.replace new RegExp(regex.xmlNode().source, 'gi'), (node, nodeName, closeTag) ->
       node = stripNamespacedNamespace(node) if opt.removeNamespacedNamespace
       node = stripNullNamespaces(node) if opt.removeNullNamespace
       node = stripAllNamespaces(node) if opt.removeAllNamespaces
-      node = stripDuplicateAttributes(node, nodeName, closeTag) if opt.removeDupAttrs
+      if isRootNode
+        isRootNode = false
+        blacklist = []
+      else
+        blacklist = rootNamespaces
+      node = stripDuplicateAttributes(node, nodeName, closeTag, blacklist) if opt.removeDupAttrs or opt.removeDupNamespace
       return node
 
   collapseEmptyElements = (xml) ->
@@ -232,7 +227,6 @@
     outStr = stripHeader(outStr) if opt.normalizeHeader or !opt.xmlHeaderInOutput
     outStr = prependHeader(outStr, opt.encoding, standalone) if opt.xmlHeaderInOutput and needsHeader(outStr)
     outStr = cleanupXmlNodes(outStr, opt)
-    outStr = stripRedundantNamespaces(outStr) if opt.removeDupNamespace
     outStr = collapseEmptyElements(outStr) if opt.collapseEmptyElements
     return outStr
 
