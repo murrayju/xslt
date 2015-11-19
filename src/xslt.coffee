@@ -14,7 +14,7 @@
     xmlNode: -> /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/i
     xmlLike: -> /^\s*</
     xmlHeader: -> /^\s*<\?xml\b[^<]+/i
-    namespaces: -> /\bxmlns(:[a-z0-9:\-]+)?\s*=\s*"[^"]*"/ig
+    namespaces: -> /\bxmlns(?::([a-z0-9:\-]+))?\s*=\s*"([^"]*)"/ig
   isXml = (str) -> regex.xmlLike().test(str)
   hasXmlHeader = (str) -> regex.xmlHeader().test(str)
   needsHeader = (str) -> isXml(str) && !hasXmlHeader(str)
@@ -115,22 +115,34 @@
       xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"))
     return xml
 
-  getRootNamespaces = (xml) ->
-    matches = xml?.match(regex.xmlNode())
-    return null unless matches?.length
-    matches[0].match(regex.namespaces())
-
-  stripDuplicateAttributes = (node, nodeName, closeTag, blacklist=[]) ->
-    attrRegex = /([a-zA-Z0-9:\-]+)\s*=\s*("[^"]*")/g
+  getAttributes = (node, excludeFn) ->
+    attrRegex = /\s([a-z0-9:\-]+)\s*=\s*"([^"]*)"/gi
     collection = {}
-    parts = attrRegex.exec(node)
-    while parts
-      collection[parts[1]] = parts[0] unless parts[0] in blacklist
-      parts = attrRegex.exec(node)
-    newStr = '<' + nodeName
-    newStr += (' ' + val) for key, val of collection
-    newStr += (closeTag || '') + '>'
-    return newStr
+    while parts = attrRegex.exec(node)
+      [all, name, val] = parts
+      collection[name] = val unless excludeFn?(name, val)
+    return collection
+
+  buildElementString = (nodeName, attrs={}, closeTag='') ->
+    elStr = "<#{nodeName}"
+    elStr += " #{name}=\"#{val}\"" for name, val of attrs
+    elStr += "#{closeTag}>"
+    return elStr
+
+  cleanRootNamespaces = (node, nodeName, closeTag, opt) ->
+    attrs = getAttributes node, (name, val) ->
+      /^xmlns/.test(name) and val in opt.excludedNamespaceUris
+
+    for ns, uri of opt.includeNamespaces
+      unless uri in (val for name, val of attrs)
+        attName = 'xmlns'
+        attName += ":#{ns}" if ns.length
+        attrs[attName] = uri
+    buildElementString(nodeName, attrs, closeTag)
+
+  stripDuplicateAttributes = (node, nodeName, closeTag, blacklist={}) ->
+    attrs = getAttributes node, (name, val) -> blacklist[name] == val
+    buildElementString(nodeName, attrs, closeTag)
 
   stripNullNamespaces = (node) -> node.replace(/xmlns\s*=\s*""/gi, '')
 
@@ -148,7 +160,7 @@
 
   # Combine rules that apply to a single node at a time
   cleanupXmlNodes = (xml, opt) ->
-    rootNamespaces = if opt.removeDupNamespace then getRootNamespaces(xml) else []
+    rootNamespaces = {}
     isRootNode = true
     return xml?.replace new RegExp(regex.xmlNode().source, 'gi'), (node, nodeName, closeTag) ->
       node = stripNamespacedNamespace(node) if opt.removeNamespacedNamespace
@@ -156,10 +168,11 @@
       node = stripAllNamespaces(node) if opt.removeAllNamespaces
       if isRootNode
         isRootNode = false
-        blacklist = []
+        node = cleanRootNamespaces(node, nodeName, closeTag, opt)
+        rootNamespaces = getAttributes node, (name) -> not /^xmlns/.test(name)
       else
-        blacklist = rootNamespaces
-      node = stripDuplicateAttributes(node, nodeName, closeTag, blacklist) if opt.removeDupAttrs or opt.removeDupNamespace
+        if opt.removeDupAttrs or opt.removeDupNamespace
+          node = stripDuplicateAttributes(node, nodeName, closeTag, rootNamespaces)
       return node
 
   collapseEmptyElements = (xml) ->
@@ -179,6 +192,8 @@
     removeNullNamespace: true
     removeAllNamespaces: false
     removeNamespacedNamespace: true
+    includeNamespaces: {}
+    excludedNamespaceUris: []
 
   loadOptions = (options) ->
     opt = {}

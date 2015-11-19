@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<hello-world
+	xmlns="urn:test:ns1"
+	xmlns:ns4="urn:test:ns4"
+	rootAttr="stays in implicit namespace"
+	ns3:passMe="stays in the ns3 namespace"
+	test-someRootAttr="goes into the ns2 namespace, pulls up ns declaration">
+	<test
+		defaultAttr="stays in implicit namespace"
+		test-someAttr="goes into the ns2 namespace"
+		ns3:namedAttr="stays in the ns3 namespace">
+		Something
+	</test>
+	<ns3:cat
+		defaultAttr="stays in the implicit namespace"
+		test-catName="goes into the ns2 namespace"
+		ns3:namedAttr="stays in the ns3 namespace">
+		a cat
+	</ns3:cat>
+</hello-world>
