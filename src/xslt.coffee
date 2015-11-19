@@ -10,8 +10,13 @@
     root?.xslt = factory()
 ) this, ->
 
-  isXml = (str) -> /^\s*</.test(str)
-  hasXmlHeader = (str) -> /^\s*<\?/.test(str)
+  regex =
+    xmlNode: -> /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/i
+    xmlLike: -> /^\s*</
+    xmlHeader: -> /^\s*<\?xml\b[^<]+/i
+    namespaces: -> /\bxmlns(:[a-z0-9:\-]+)?\s*=\s*"[^"]*"/ig
+  isXml = (str) -> regex.xmlLike().test(str)
+  hasXmlHeader = (str) -> regex.xmlHeader().test(str)
   needsHeader = (str) -> isXml(str) && !hasXmlHeader(str)
   xmlHeader = (encoding, standalone) ->
     str = '<?xml version="1.0" '
@@ -20,9 +25,9 @@
     str += '?>'
     return str
   prependHeader = (str, encoding, standalone) -> xmlHeader(encoding, standalone) + str
-  stripHeader = (str) -> str?.replace(/\s*<\?xml[^<]+/, '')
+  stripHeader = (str) -> str?.replace(regex.xmlHeader(), '')
   getHeader = (str) ->
-    match = str?.match(/^\s*<\?xml\b[^<]+/i)
+    match = str?.match(regex.xmlHeader())
     return (match?.length && match[0]?.trim?()) || null
   getAttrVal = (node, attrName) ->
     match = (new RegExp('\\b' + attrName + '\\s*=\\s*"([^"]*)"', 'g')).exec(node)
@@ -113,17 +118,17 @@
   # If a ns is defined in the root node, it should not be redefined later
   stripRedundantNamespaces = (xml) ->
     # start with the first node
-    matches = xml?.match(/<([a-zA-Z0-9:\-]+)\s(?:\/(?!>)|[^>\/])*(\/?)>/)
+    matches = xml?.match(regex.xmlNode())
     return xml unless matches?.length
 
     rootNode = matches[0]
-    rootNamespaces = rootNode.match(/xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g)
+    rootNamespaces = rootNode.match(regex.namespaces())
     return xml unless rootNamespaces?.length
 
     offset = xml.indexOf(rootNode)
     start = xml.substring(0, offset + rootNode.length)
     remainder = xml.substring(offset + rootNode.length)
-    return start + remainder.replace /xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g, (ns) ->
+    return start + remainder.replace regex.namespaces(), (ns) ->
       return '' if ns in rootNamespaces
       return ns
 
@@ -141,7 +146,7 @@
 
   stripNullNamespaces = (node) -> node.replace(/xmlns\s*=\s*""/gi, '')
 
-  stripAllNamespaces = (node) -> node.replace(/xmlns\s*=\s*"[^"]*"/gi, '')
+  stripAllNamespaces = (node) -> node.replace(regex.namespaces(), '')
 
   # This happens in IE 10
   stripNamespacedNamespace = (node) ->
@@ -155,7 +160,7 @@
 
   # Combine rules that apply to a single node at a time
   cleanupXmlNodes = (xml, opt) ->
-    return xml?.replace /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/gi, (node, nodeName, closeTag) ->
+    return xml?.replace new RegExp(regex.xmlNode().source, 'gi'), (node, nodeName, closeTag) ->
       node = stripNamespacedNamespace(node) if opt.removeNamespacedNamespace
       node = stripNullNamespaces(node) if opt.removeNullNamespace
       node = stripAllNamespaces(node) if opt.removeAllNamespaces
