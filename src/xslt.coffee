@@ -110,23 +110,22 @@
       xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"))
     return xml
 
-  arrayContains = (arr, val) ->
-    for v in arr
-      return true if v == val
-    return false
-
   # If a ns is defined in the root node, it should not be redefined later
   stripRedundantNamespaces = (xml) ->
     # start with the first node
-    matches = xml?.match(/^<([a-zA-Z0-9:\-]+)\s(?:\/(?!>)|[^>\/])*(\/?)>/)
-    if matches?.length
-      rootNode = matches[0]
-      rootNamespaces = rootNode.match(/xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g)
+    matches = xml?.match(/<([a-zA-Z0-9:\-]+)\s(?:\/(?!>)|[^>\/])*(\/?)>/)
+    return xml unless matches?.length
 
-      return rootNode + xml.substr(rootNode.length).replace /xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g, (ns) ->
-        return '' if arrayContains(rootNamespaces, ns)
-        return ns
-    return xml
+    rootNode = matches[0]
+    rootNamespaces = rootNode.match(/xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g)
+    return xml unless rootNamespaces?.length
+
+    offset = xml.indexOf(rootNode)
+    start = xml.substring(0, offset + rootNode.length)
+    remainder = xml.substring(offset + rootNode.length)
+    return start + remainder.replace /xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g, (ns) ->
+      return '' if ns in rootNamespaces
+      return ns
 
   stripDuplicateAttributes = (node, nodeName, closeTag) ->
     attrRegex = /([a-zA-Z0-9:\-]+)\s*=\s*("[^"]*")/g
