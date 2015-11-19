@@ -1,7 +1,8 @@
-/*! xslt v0.5.0+0.master.5b6e912447a1 | (c) 2015 Justin Murray | built on 2015-08-06 */
+/*! xslt v0.6.0+master.0.dad59f283066 | (c) 2015 Justin Murray | built on 2015-11-19 */
 
 (function() {
-  var slice = [].slice;
+  var slice = [].slice,
+    indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   (function(root, factory) {
     if (typeof define === 'function' && (define.amd != null)) {
@@ -12,12 +13,26 @@
       return root != null ? root.xslt = factory() : void 0;
     }
   })(this, function() {
-    var activeXSupported, arrayContains, cleanupXmlNodes, collapseEmptyElements, createDomDoc, createXSLTemplate, defaults, docToStr, getAttrVal, getHeader, getHeaderEncoding, getHeaderStandalone, hasXmlHeader, isXml, manualCreateElement, needsHeader, newDocument, prependHeader, strToDoc, stripAllNamespaces, stripDuplicateAttributes, stripHeader, stripNamespacedNamespace, stripNullNamespaces, stripRedundantNamespaces, tryCreateActiveX, xmlHeader;
+    var $xslt, activeXSupported, buildElementString, cleanRootNamespaces, cleanupXmlNodes, collapseEmptyElements, createDomDoc, createXSLTemplate, defaults, docToStr, getAttrVal, getAttributes, getHeader, getHeaderEncoding, getHeaderStandalone, hasXmlHeader, isXml, loadOptions, manualCreateElement, needsHeader, newDocument, prependHeader, regex, strToDoc, stripAllNamespaces, stripDuplicateAttributes, stripHeader, stripNamespacedNamespace, stripNullNamespaces, tryCreateActiveX, xmlHeader;
+    regex = {
+      xmlNode: function() {
+        return /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/i;
+      },
+      xmlLike: function() {
+        return /^\s*</;
+      },
+      xmlHeader: function() {
+        return /^\s*<\?xml\b[^<]+/i;
+      },
+      namespaces: function() {
+        return /\bxmlns(?::([a-z0-9:\-]+))?\s*=\s*"([^"]*)"/ig;
+      }
+    };
     isXml = function(str) {
-      return /^\s*</.test(str);
+      return regex.xmlLike().test(str);
     };
     hasXmlHeader = function(str) {
-      return /^\s*<\?/.test(str);
+      return regex.xmlHeader().test(str);
     };
     needsHeader = function(str) {
       return isXml(str) && !hasXmlHeader(str);
@@ -38,11 +53,11 @@
       return xmlHeader(encoding, standalone) + str;
     };
     stripHeader = function(str) {
-      return str != null ? str.replace(/\s*<\?xml[^<]+/, '') : void 0;
+      return str != null ? str.replace(regex.xmlHeader(), '') : void 0;
     };
     getHeader = function(str) {
       var match, ref;
-      match = str != null ? str.match(/^\s*<\?xml\b[^<]+/i) : void 0;
+      match = str != null ? str.match(regex.xmlHeader()) : void 0;
       return ((match != null ? match.length : void 0) && ((ref = match[0]) != null ? typeof ref.trim === "function" ? ref.trim() : void 0 : void 0)) || null;
     };
     getAttrVal = function(node, attrName) {
@@ -146,53 +161,75 @@
       }
       return xml;
     };
-    arrayContains = function(arr, val) {
-      var i, len, v;
-      for (i = 0, len = arr.length; i < len; i++) {
-        v = arr[i];
-        if (v === val) {
-          return true;
+    getAttributes = function(node, excludeFn) {
+      var all, attrRegex, collection, name, parts, val;
+      attrRegex = /\s([a-z0-9:\-]+)\s*=\s*"([^"]*)"/gi;
+      collection = {};
+      while (parts = attrRegex.exec(node)) {
+        all = parts[0], name = parts[1], val = parts[2];
+        if (!(typeof excludeFn === "function" ? excludeFn(name, val) : void 0)) {
+          collection[name] = val;
         }
       }
-      return false;
+      return collection;
     };
-    stripRedundantNamespaces = function(xml) {
-      var matches, rootNamespaces, rootNode;
-      matches = xml != null ? xml.match(/^<([a-zA-Z0-9:\-]+)\s(?:\/(?!>)|[^>\/])*(\/?)>/) : void 0;
-      if (matches != null ? matches.length : void 0) {
-        rootNode = matches[0];
-        rootNamespaces = rootNode.match(/xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g);
-        return rootNode + xml.substr(rootNode.length).replace(/xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g, function(ns) {
-          if (arrayContains(rootNamespaces, ns)) {
-            return '';
+    buildElementString = function(nodeName, attrs, closeTag) {
+      var elStr, name, val;
+      if (attrs == null) {
+        attrs = {};
+      }
+      if (closeTag == null) {
+        closeTag = '';
+      }
+      elStr = "<" + nodeName;
+      for (name in attrs) {
+        val = attrs[name];
+        elStr += " " + name + "=\"" + val + "\"";
+      }
+      elStr += closeTag + ">";
+      return elStr;
+    };
+    cleanRootNamespaces = function(node, nodeName, closeTag, opt) {
+      var attName, attrs, name, ns, ref, uri, val;
+      attrs = getAttributes(node, function(name, val) {
+        return /^xmlns/.test(name) && indexOf.call(opt.excludedNamespaceUris, val) >= 0;
+      });
+      ref = opt.includeNamespaces;
+      for (ns in ref) {
+        uri = ref[ns];
+        if (indexOf.call((function() {
+          var results;
+          results = [];
+          for (name in attrs) {
+            val = attrs[name];
+            results.push(val);
           }
-          return ns;
-        });
+          return results;
+        })(), uri) < 0) {
+          attName = 'xmlns';
+          if (ns.length) {
+            attName += ":" + ns;
+          }
+          attrs[attName] = uri;
+        }
       }
-      return xml;
+      return buildElementString(nodeName, attrs, closeTag);
     };
-    stripDuplicateAttributes = function(node, nodeName, closeTag) {
-      var attrRegex, collection, key, newStr, parts, val;
-      attrRegex = /([a-zA-Z0-9:\-]+)\s*=\s*("[^"]*")/g;
-      collection = {};
-      parts = attrRegex.exec(node);
-      while (parts) {
-        collection[parts[1]] = parts[0];
-        parts = attrRegex.exec(node);
+    stripDuplicateAttributes = function(node, nodeName, closeTag, blacklist) {
+      var attrs;
+      if (blacklist == null) {
+        blacklist = {};
       }
-      newStr = '<' + nodeName;
-      for (key in collection) {
-        val = collection[key];
-        newStr += ' ' + val;
-      }
-      newStr += (closeTag || '') + '>';
-      return newStr;
+      attrs = getAttributes(node, function(name, val) {
+        return blacklist[name] === val;
+      });
+      return buildElementString(nodeName, attrs, closeTag);
     };
     stripNullNamespaces = function(node) {
       return node.replace(/xmlns\s*=\s*""/gi, '');
     };
     stripAllNamespaces = function(node) {
-      return node.replace(/xmlns\s*=\s*"[^"]*"/gi, '');
+      return node.replace(regex.namespaces(), '');
     };
     stripNamespacedNamespace = function(node) {
       var i, len, num, nums;
@@ -208,7 +245,10 @@
       return node;
     };
     cleanupXmlNodes = function(xml, opt) {
-      return xml != null ? xml.replace(/<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/gi, function(node, nodeName, closeTag) {
+      var isRootNode, rootNamespaces;
+      rootNamespaces = {};
+      isRootNode = true;
+      return xml != null ? xml.replace(new RegExp(regex.xmlNode().source, 'gi'), function(node, nodeName, closeTag) {
         if (opt.removeNamespacedNamespace) {
           node = stripNamespacedNamespace(node);
         }
@@ -218,8 +258,16 @@
         if (opt.removeAllNamespaces) {
           node = stripAllNamespaces(node);
         }
-        if (opt.removeDupAttrs) {
-          node = stripDuplicateAttributes(node, nodeName, closeTag);
+        if (isRootNode) {
+          isRootNode = false;
+          node = cleanRootNamespaces(node, nodeName, closeTag, opt);
+          rootNamespaces = getAttributes(node, function(name) {
+            return !/^xmlns/.test(name);
+          });
+        } else {
+          if (opt.removeDupAttrs || opt.removeDupNamespace) {
+            node = stripDuplicateAttributes(node, nodeName, closeTag, rootNamespaces);
+          }
         }
         return node;
       }) : void 0;
@@ -241,10 +289,12 @@
       removeDupAttrs: true,
       removeNullNamespace: true,
       removeAllNamespaces: false,
-      removeNamespacedNamespace: true
+      removeNamespacedNamespace: true,
+      includeNamespaces: {},
+      excludedNamespaceUris: []
     };
-    return function(xmlStr, xsltStr, options) {
-      var encoding, opt, outStr, p, processor, ref, standalone, trans, xmlDoc, xslProc, xslt, xsltDoc;
+    loadOptions = function(options) {
+      var opt, p;
       opt = {};
       for (p in defaults) {
         opt[p] = defaults[p];
@@ -254,6 +304,11 @@
           opt[p] = options[p];
         }
       }
+      return opt;
+    };
+    $xslt = function(xmlStr, xsltStr, options) {
+      var opt, outStr, processor, ref, trans, xmlDoc, xslProc, xslt, xsltDoc;
+      opt = loadOptions(options);
       xmlDoc = strToDoc(xmlStr);
       if (xmlDoc == null) {
         throw new Error('Failed to load the XML document');
@@ -277,25 +332,37 @@
         trans = xslProc.output;
       }
       outStr = docToStr(trans);
+      if (opt.preserveEncoding) {
+        opt.encoding = getHeaderEncoding(outStr) || getHeaderEncoding(xmlStr) || opt.encoding;
+      }
       if (opt.cleanup) {
-        encoding = opt.preserveEncoding ? getHeaderEncoding(outStr) || getHeaderEncoding(xmlStr) : opt.encoding;
-        standalone = getHeaderStandalone(outStr);
-        if (opt.normalizeHeader || !opt.xmlHeaderInOutput) {
-          outStr = stripHeader(outStr);
-        }
-        if (opt.xmlHeaderInOutput && needsHeader(outStr)) {
-          outStr = prependHeader(outStr, encoding, standalone);
-        }
-        outStr = cleanupXmlNodes(outStr, opt);
-        if (opt.removeDupNamespace) {
-          outStr = stripRedundantNamespaces(outStr);
-        }
-        if (opt.collapseEmptyElements) {
-          outStr = collapseEmptyElements(outStr);
-        }
+        outStr = $xslt.cleanup(outStr, opt);
       }
       return outStr;
     };
+    $xslt.cleanup = function(outStr, options) {
+      var opt, standalone;
+      opt = loadOptions(options);
+      if (!opt.cleanup) {
+        return;
+      }
+      if (opt.preserveEncoding) {
+        opt.encoding = getHeaderEncoding(outStr) || opt.encoding;
+      }
+      standalone = getHeaderStandalone(outStr);
+      if (opt.normalizeHeader || !opt.xmlHeaderInOutput) {
+        outStr = stripHeader(outStr);
+      }
+      if (opt.xmlHeaderInOutput && needsHeader(outStr)) {
+        outStr = prependHeader(outStr, opt.encoding, standalone);
+      }
+      outStr = cleanupXmlNodes(outStr, opt);
+      if (opt.collapseEmptyElements) {
+        outStr = collapseEmptyElements(outStr);
+      }
+      return outStr;
+    };
+    return $xslt;
   });
 
 }).call(this);
