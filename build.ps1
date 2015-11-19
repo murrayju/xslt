@@ -1,10 +1,10 @@
-$nodeVersion = "0.12.2"
-$npmVersion = "2.7.6"
+$nodeVersion = "5.0.0"
+$npmVersion = "3.3.11"
 $downloadDir = Join-Path (pwd) "download"
 
 $x64 = [IntPtr]::Size -eq 8
-$nodeArch = if ($x64) { "/x64" } else { "" }
-$nodeUrl = "http://nodejs.org/dist/v$nodeVersion$nodeArch/node.exe"
+$nodeArch = if ($x64) { "x64" } else { "x86" }
+$nodeUrl = "http://nodejs.org/dist/v$nodeVersion/win-$nodeArch/node.exe"
 $npmUrl = "https://github.com/npm/npm/archive/v$npmVersion.zip"
 $nodeDir = Join-Path $downloadDir "node-v$nodeVersion$nodeArch"
 
@@ -22,7 +22,7 @@ if (![System.IO.File]::Exists($nodeExe)) {
 $env:Path += ";$nodeDir"
 
 # Download npm
-$npmZip = Join-Path $nodeDir "npm.zip"
+$npmZip = Join-Path $nodeDir "npm.$npmVersion.zip"
 if (![System.IO.File]::Exists($npmZip)) {
 	Write-Host "Downloading $npmUrl to $npmZip"
 	$downloader = new-object System.Net.WebClient

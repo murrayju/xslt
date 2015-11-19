@@ -10,8 +10,13 @@
     root?.xslt = factory()
 ) this, ->
 
-  isXml = (str) -> /^\s*</.test(str)
-  hasXmlHeader = (str) -> /^\s*<\?/.test(str)
+  regex =
+    xmlNode: -> /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/i
+    xmlLike: -> /^\s*</
+    xmlHeader: -> /^\s*<\?xml\b[^<]+/i
+    namespaces: -> /\bxmlns(?::([a-z0-9:\-]+))?\s*=\s*"([^"]*)"/ig
+  isXml = (str) -> regex.xmlLike().test(str)
+  hasXmlHeader = (str) -> regex.xmlHeader().test(str)
   needsHeader = (str) -> isXml(str) && !hasXmlHeader(str)
   xmlHeader = (encoding, standalone) ->
     str = '<?xml version="1.0" '
@@ -20,9 +25,9 @@
     str += '?>'
     return str
   prependHeader = (str, encoding, standalone) -> xmlHeader(encoding, standalone) + str
-  stripHeader = (str) -> str?.replace(/\s*<\?xml[^<]+/, '')
+  stripHeader = (str) -> str?.replace(regex.xmlHeader(), '')
   getHeader = (str) ->
-    match = str?.match(/^\s*<\?xml\b[^<]+/i)
+    match = str?.match(regex.xmlHeader())
     return (match?.length && match[0]?.trim?()) || null
   getAttrVal = (node, attrName) ->
     match = (new RegExp('\\b' + attrName + '\\s*=\\s*"([^"]*)"', 'g')).exec(node)
@@ -110,39 +115,38 @@
       xml = xml.substring(xml.indexOf(">") + 1, xml.lastIndexOf("<"))
     return xml
 
-  arrayContains = (arr, val) ->
-    for v in arr
-      return true if v == val
-    return false
-
-  # If a ns is defined in the root node, it should not be redefined later
-  stripRedundantNamespaces = (xml) ->
-    # start with the first node
-    matches = xml?.match(/^<([a-zA-Z0-9:\-]+)\s(?:\/(?!>)|[^>\/])*(\/?)>/)
-    if matches?.length
-      rootNode = matches[0]
-      rootNamespaces = rootNode.match(/xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g)
-
-      return rootNode + xml.substr(rootNode.length).replace /xmlns(:[a-zA-Z0-9:\-]+)?="[^"]*"/g, (ns) ->
-        return '' if arrayContains(rootNamespaces, ns)
-        return ns
-    return xml
-
-  stripDuplicateAttributes = (node, nodeName, closeTag) ->
-    attrRegex = /([a-zA-Z0-9:\-]+)\s*=\s*("[^"]*")/g
+  getAttributes = (node, excludeFn) ->
+    attrRegex = /\s([a-z0-9:\-]+)\s*=\s*"([^"]*)"/gi
     collection = {}
-    parts = attrRegex.exec(node)
-    while parts
-      collection[parts[1]] = parts[0]
-      parts = attrRegex.exec(node)
-    newStr = '<' + nodeName
-    newStr += (' ' + val) for key, val of collection
-    newStr += (closeTag || '') + '>'
-    return newStr
+    while parts = attrRegex.exec(node)
+      [all, name, val] = parts
+      collection[name] = val unless excludeFn?(name, val)
+    return collection
+
+  buildElementString = (nodeName, attrs={}, closeTag='') ->
+    elStr = "<#{nodeName}"
+    elStr += " #{name}=\"#{val}\"" for name, val of attrs
+    elStr += "#{closeTag}>"
+    return elStr
+
+  cleanRootNamespaces = (node, nodeName, closeTag, opt) ->
+    attrs = getAttributes node, (name, val) ->
+      /^xmlns/.test(name) and val in opt.excludedNamespaceUris
+
+    for ns, uri of opt.includeNamespaces
+      unless uri in (val for name, val of attrs)
+        attName = 'xmlns'
+        attName += ":#{ns}" if ns.length
+        attrs[attName] = uri
+    buildElementString(nodeName, attrs, closeTag)
+
+  stripDuplicateAttributes = (node, nodeName, closeTag, blacklist={}) ->
+    attrs = getAttributes node, (name, val) -> blacklist[name] == val
+    buildElementString(nodeName, attrs, closeTag)
 
   stripNullNamespaces = (node) -> node.replace(/xmlns\s*=\s*""/gi, '')
 
-  stripAllNamespaces = (node) -> node.replace(/xmlns\s*=\s*"[^"]*"/gi, '')
+  stripAllNamespaces = (node) -> node.replace(regex.namespaces(), '')
 
   # This happens in IE 10
   stripNamespacedNamespace = (node) ->
@@ -156,11 +160,19 @@
 
   # Combine rules that apply to a single node at a time
   cleanupXmlNodes = (xml, opt) ->
-    return xml?.replace /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/gi, (node, nodeName, closeTag) ->
+    rootNamespaces = {}
+    isRootNode = true
+    return xml?.replace new RegExp(regex.xmlNode().source, 'gi'), (node, nodeName, closeTag) ->
       node = stripNamespacedNamespace(node) if opt.removeNamespacedNamespace
       node = stripNullNamespaces(node) if opt.removeNullNamespace
       node = stripAllNamespaces(node) if opt.removeAllNamespaces
-      node = stripDuplicateAttributes(node, nodeName, closeTag) if opt.removeDupAttrs
+      if isRootNode
+        isRootNode = false
+        node = cleanRootNamespaces(node, nodeName, closeTag, opt)
+        rootNamespaces = getAttributes node, (name) -> not /^xmlns/.test(name)
+      else
+        if opt.removeDupAttrs or opt.removeDupNamespace
+          node = stripDuplicateAttributes(node, nodeName, closeTag, rootNamespaces)
       return node
 
   collapseEmptyElements = (xml) ->
@@ -180,11 +192,17 @@
     removeNullNamespace: true
     removeAllNamespaces: false
     removeNamespacedNamespace: true
+    includeNamespaces: {}
+    excludedNamespaceUris: []
 
-  return (xmlStr, xsltStr, options) ->
+  loadOptions = (options) ->
     opt = {}
     opt[p] = defaults[p] for p of defaults
     opt[p] = options[p] for p of options if options?
+    return opt
+
+  $xslt = (xmlStr, xsltStr, options) ->
+    opt = loadOptions(options)
 
     xmlDoc = strToDoc(xmlStr)
     throw new Error('Failed to load the XML document') unless xmlDoc?
@@ -209,16 +227,22 @@
       trans = xslProc.output
 
     outStr = docToStr(trans)
-    if opt.cleanup
-      encoding = if opt.preserveEncoding
-        getHeaderEncoding(outStr) || getHeaderEncoding(xmlStr)
-      else
-        opt.encoding
-      standalone = getHeaderStandalone(outStr)
-      outStr = stripHeader(outStr) if opt.normalizeHeader or !opt.xmlHeaderInOutput
-      outStr = prependHeader(outStr, encoding, standalone) if opt.xmlHeaderInOutput and needsHeader(outStr)
-      outStr = cleanupXmlNodes(outStr, opt)
-      outStr = stripRedundantNamespaces(outStr) if opt.removeDupNamespace
-      outStr = collapseEmptyElements(outStr) if opt.collapseEmptyElements
+    if opt.preserveEncoding
+      opt.encoding = getHeaderEncoding(outStr) || getHeaderEncoding(xmlStr) || opt.encoding
+    outStr = $xslt.cleanup(outStr, opt) if opt.cleanup
     return outStr
 
+  $xslt.cleanup = (outStr, options) ->
+    opt = loadOptions(options)
+    return unless opt.cleanup
+
+    if opt.preserveEncoding
+      opt.encoding = getHeaderEncoding(outStr) || opt.encoding
+    standalone = getHeaderStandalone(outStr)
+    outStr = stripHeader(outStr) if opt.normalizeHeader or !opt.xmlHeaderInOutput
+    outStr = prependHeader(outStr, opt.encoding, standalone) if opt.xmlHeaderInOutput and needsHeader(outStr)
+    outStr = cleanupXmlNodes(outStr, opt)
+    outStr = collapseEmptyElements(outStr) if opt.collapseEmptyElements
+    return outStr
+
+  return $xslt

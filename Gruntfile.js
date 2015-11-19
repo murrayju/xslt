@@ -295,7 +295,13 @@ module.exports = function (grunt) {
         var version = grunt.file.readJSON('version.json');
         // Allow the build to be set from the command line: grunt --buildNum=123
         version.build = grunt.option('buildNum') || 0;
-        version.info = '<%= version.major %>.<%= version.minor %>.<%= version.patch %>+<%= version.build %>.<%= gitInfo.branch %>.<%= gitInfo.revId %>';
+
+        var gitInfo = grunt.config.get('gitInfo');
+        if (gitInfo.branch === 'master') {
+            version.info = '<%= version.major %>.<%= version.minor %>.<%= version.patch %>+master.<%= version.build %>.<%= gitInfo.revId %>';
+        } else {
+            version.info = '<%= version.major %>.<%= version.minor %>.<%= version.patch %>-<%= gitInfo.branch %>+<%= version.build %>.<%= gitInfo.revId %>';
+        }
         grunt.config.set('version', version);
         var infoVers = grunt.template.process(version.info);
         grunt.log.writeln('Current build version: ' + infoVers);
