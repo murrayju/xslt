@@ -1,4 +1,4 @@
-/*! xslt v0.6.0+master.0.dad59f283066 | (c) 2015 Justin Murray | built on 2015-11-19 */
+/*! xslt v0.7.0+master.0.d540d1829bf5 | (c) 2015 Justin Murray | built on 2015-11-20 */
 
 (function() {
   var slice = [].slice,
@@ -162,16 +162,20 @@
       return xml;
     };
     getAttributes = function(node, excludeFn) {
-      var all, attrRegex, collection, name, parts, val;
-      attrRegex = /\s([a-z0-9:\-]+)\s*=\s*"([^"]*)"/gi;
-      collection = {};
+      var all, attrRegex, attrs, innerA, innerB, name, outer, parts, val;
+      attrRegex = /\s([a-z0-9:\-]+)\s*=\s*("([^"]*)"|'([^']*)')/gi;
+      attrs = {};
       while (parts = attrRegex.exec(node)) {
-        all = parts[0], name = parts[1], val = parts[2];
+        all = parts[0], name = parts[1], outer = parts[2], innerA = parts[3], innerB = parts[4];
+        val = {
+          outer: outer,
+          inner: innerA || innerB
+        };
         if (!(typeof excludeFn === "function" ? excludeFn(name, val) : void 0)) {
-          collection[name] = val;
+          attrs[name] = val;
         }
       }
-      return collection;
+      return attrs;
     };
     buildElementString = function(nodeName, attrs, closeTag) {
       var elStr, name, val;
@@ -184,7 +188,7 @@
       elStr = "<" + nodeName;
       for (name in attrs) {
         val = attrs[name];
-        elStr += " " + name + "=\"" + val + "\"";
+        elStr += " " + name + "=" + val.outer;
       }
       elStr += closeTag + ">";
       return elStr;
@@ -192,7 +196,8 @@
     cleanRootNamespaces = function(node, nodeName, closeTag, opt) {
       var attName, attrs, name, ns, ref, uri, val;
       attrs = getAttributes(node, function(name, val) {
-        return /^xmlns/.test(name) && indexOf.call(opt.excludedNamespaceUris, val) >= 0;
+        var ref;
+        return /^xmlns/.test(name) && (ref = val.inner, indexOf.call(opt.excludedNamespaceUris, ref) >= 0);
       });
       ref = opt.includeNamespaces;
       for (ns in ref) {
@@ -202,7 +207,7 @@
           results = [];
           for (name in attrs) {
             val = attrs[name];
-            results.push(val);
+            results.push(val.inner);
           }
           return results;
         })(), uri) < 0) {
@@ -210,7 +215,10 @@
           if (ns.length) {
             attName += ":" + ns;
           }
-          attrs[attName] = uri;
+          attrs[attName] = {
+            outer: "\"" + uri + "\"",
+            inner: uri
+          };
         }
       }
       return buildElementString(nodeName, attrs, closeTag);
@@ -218,10 +226,11 @@
     stripDuplicateAttributes = function(node, nodeName, closeTag, blacklist) {
       var attrs;
       if (blacklist == null) {
-        blacklist = {};
+        blacklist = [];
       }
       attrs = getAttributes(node, function(name, val) {
-        return blacklist[name] === val;
+        var ref;
+        return ref = val.inner, indexOf.call(blacklist, ref) >= 0;
       });
       return buildElementString(nodeName, attrs, closeTag);
     };
@@ -245,10 +254,11 @@
       return node;
     };
     cleanupXmlNodes = function(xml, opt) {
-      var isRootNode, rootNamespaces;
-      rootNamespaces = {};
+      var isRootNode, namespaceBlacklist;
+      namespaceBlacklist = [];
       isRootNode = true;
       return xml != null ? xml.replace(new RegExp(regex.xmlNode().source, 'gi'), function(node, nodeName, closeTag) {
+        var i, len, name, ref, rootNamespaces, uri, val;
         if (opt.removeNamespacedNamespace) {
           node = stripNamespacedNamespace(node);
         }
@@ -264,9 +274,23 @@
           rootNamespaces = getAttributes(node, function(name) {
             return !/^xmlns/.test(name);
           });
+          namespaceBlacklist = (function() {
+            var results;
+            results = [];
+            for (name in rootNamespaces) {
+              val = rootNamespaces[name];
+              results.push(val.inner);
+            }
+            return results;
+          })();
+          ref = opt.excludedNamespaceUris;
+          for (i = 0, len = ref.length; i < len; i++) {
+            uri = ref[i];
+            namespaceBlacklist.push(uri);
+          }
         } else {
           if (opt.removeDupAttrs || opt.removeDupNamespace) {
-            node = stripDuplicateAttributes(node, nodeName, closeTag, rootNamespaces);
+            node = stripDuplicateAttributes(node, nodeName, closeTag, namespaceBlacklist);
           }
         }
         return node;
