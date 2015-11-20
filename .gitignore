@@ -15,3 +15,4 @@ npm-debug.log
 *.orig
 .sync/
 bower.json
+test-results.xml
