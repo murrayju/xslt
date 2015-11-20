@@ -116,32 +116,33 @@
     return xml
 
   getAttributes = (node, excludeFn) ->
-    attrRegex = /\s([a-z0-9:\-]+)\s*=\s*"([^"]*)"/gi
-    collection = {}
+    attrRegex = /\s([a-z0-9:\-]+)\s*=\s*("([^"]*)"|'([^']*)')/gi
+    attrs = {}
     while parts = attrRegex.exec(node)
-      [all, name, val] = parts
-      collection[name] = val unless excludeFn?(name, val)
-    return collection
+      [all, name, outer, innerA, innerB] = parts
+      val = {outer: outer, inner: innerA || innerB}
+      attrs[name] = val unless excludeFn?(name, val)
+    return attrs
 
   buildElementString = (nodeName, attrs={}, closeTag='') ->
     elStr = "<#{nodeName}"
-    elStr += " #{name}=\"#{val}\"" for name, val of attrs
+    elStr += " #{name}=#{val.outer}" for name, val of attrs
     elStr += "#{closeTag}>"
     return elStr
 
   cleanRootNamespaces = (node, nodeName, closeTag, opt) ->
     attrs = getAttributes node, (name, val) ->
-      /^xmlns/.test(name) and val in opt.excludedNamespaceUris
+      /^xmlns/.test(name) and val.inner in opt.excludedNamespaceUris
 
     for ns, uri of opt.includeNamespaces
-      unless uri in (val for name, val of attrs)
+      unless uri in (val.inner for name, val of attrs)
         attName = 'xmlns'
         attName += ":#{ns}" if ns.length
-        attrs[attName] = uri
+        attrs[attName] = {outer: "\"#{uri}\"", inner: uri}
     buildElementString(nodeName, attrs, closeTag)
 
   stripDuplicateAttributes = (node, nodeName, closeTag, blacklist={}) ->
-    attrs = getAttributes node, (name, val) -> blacklist[name] == val
+    attrs = getAttributes node, (name, val) -> blacklist[name]? and blacklist[name].inner == val.inner
     buildElementString(nodeName, attrs, closeTag)
 
   stripNullNamespaces = (node) -> node.replace(/xmlns\s*=\s*""/gi, '')

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <hello-world>
-    <greeter name="some guy">An XSLT Programmer</greeter>
+    <greeter name="some guy's name" catchphrase='I said "stop".'>An XSLT Programmer</greeter>
     <greeting>Hello, World!</greeting>
 </hello-world>
