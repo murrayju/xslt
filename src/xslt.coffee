@@ -116,32 +116,33 @@
     return xml
 
   getAttributes = (node, excludeFn) ->
-    attrRegex = /\s([a-z0-9:\-]+)\s*=\s*"([^"]*)"/gi
-    collection = {}
+    attrRegex = /\s([a-z0-9:\-]+)\s*=\s*("([^"]*)"|'([^']*)')/gi
+    attrs = {}
     while parts = attrRegex.exec(node)
-      [all, name, val] = parts
-      collection[name] = val unless excludeFn?(name, val)
-    return collection
+      [all, name, outer, innerA, innerB] = parts
+      val = {outer: outer, inner: innerA || innerB}
+      attrs[name] = val unless excludeFn?(name, val)
+    return attrs
 
   buildElementString = (nodeName, attrs={}, closeTag='') ->
     elStr = "<#{nodeName}"
-    elStr += " #{name}=\"#{val}\"" for name, val of attrs
+    elStr += " #{name}=#{val.outer}" for name, val of attrs
     elStr += "#{closeTag}>"
     return elStr
 
   cleanRootNamespaces = (node, nodeName, closeTag, opt) ->
     attrs = getAttributes node, (name, val) ->
-      /^xmlns/.test(name) and val in opt.excludedNamespaceUris
+      /^xmlns/.test(name) and val.inner in opt.excludedNamespaceUris
 
     for ns, uri of opt.includeNamespaces
-      unless uri in (val for name, val of attrs)
+      unless uri in (val.inner for name, val of attrs)
         attName = 'xmlns'
         attName += ":#{ns}" if ns.length
-        attrs[attName] = uri
+        attrs[attName] = {outer: "\"#{uri}\"", inner: uri}
     buildElementString(nodeName, attrs, closeTag)
 
-  stripDuplicateAttributes = (node, nodeName, closeTag, blacklist={}) ->
-    attrs = getAttributes node, (name, val) -> blacklist[name] == val
+  stripDuplicateAttributes = (node, nodeName, closeTag, blacklist=[]) ->
+    attrs = getAttributes node, (name, val) -> val.inner in blacklist
     buildElementString(nodeName, attrs, closeTag)
 
   stripNullNamespaces = (node) -> node.replace(/xmlns\s*=\s*""/gi, '')
@@ -160,7 +161,7 @@
 
   # Combine rules that apply to a single node at a time
   cleanupXmlNodes = (xml, opt) ->
-    rootNamespaces = {}
+    namespaceBlacklist = []
     isRootNode = true
     return xml?.replace new RegExp(regex.xmlNode().source, 'gi'), (node, nodeName, closeTag) ->
       node = stripNamespacedNamespace(node) if opt.removeNamespacedNamespace
@@ -170,9 +171,11 @@
         isRootNode = false
         node = cleanRootNamespaces(node, nodeName, closeTag, opt)
         rootNamespaces = getAttributes node, (name) -> not /^xmlns/.test(name)
+        namespaceBlacklist = (val.inner for name, val of rootNamespaces)
+        namespaceBlacklist.push(uri) for uri in opt.excludedNamespaceUris
       else
         if opt.removeDupAttrs or opt.removeDupNamespace
-          node = stripDuplicateAttributes(node, nodeName, closeTag, rootNamespaces)
+          node = stripDuplicateAttributes(node, nodeName, closeTag, namespaceBlacklist)
       return node
 
   collapseEmptyElements = (xml) ->
