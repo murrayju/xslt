@@ -47,11 +47,13 @@
     "coffee-script": "1"
   },
   "scripts": {
-    "pretest": "node build.js build",
-    "test": "node build.js test"
+    "pretest": "grunt build",
+    "test": "grunt test",
+    "grunt": "grunt",
+    "bower": "bower"
   },
   "engines": {
     "node": ">=0.10.33"
   },
-  "version": "0.7.0+master.0.d540d1829bf5"
+  "version": "0.8.0+master.0.a112fb6468a6"
 }

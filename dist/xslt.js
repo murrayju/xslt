@@ -1,4 +1,4 @@
-/*! xslt v0.7.0+master.0.d540d1829bf5 | (c) 2015 Justin Murray | built on 2015-11-20 */
+/*! xslt v0.8.0+master.0.a112fb6468a6 | (c) 2017 Justin Murray | built on 2017-04-14 */
 
 (function() {
   var slice = [].slice,
@@ -13,7 +13,7 @@
       return root != null ? root.xslt = factory() : void 0;
     }
   })(this, function() {
-    var $xslt, activeXSupported, buildElementString, cleanRootNamespaces, cleanupXmlNodes, collapseEmptyElements, createDomDoc, createXSLTemplate, defaults, docToStr, getAttrVal, getAttributes, getHeader, getHeaderEncoding, getHeaderStandalone, hasXmlHeader, isXml, loadOptions, manualCreateElement, needsHeader, newDocument, prependHeader, regex, strToDoc, stripAllNamespaces, stripDuplicateAttributes, stripHeader, stripNamespacedNamespace, stripNullNamespaces, tryCreateActiveX, xmlHeader;
+    var $xslt, activeXSupported, buildElementString, cleanRootNamespaces, cleanupXmlNodes, collapseEmptyElements, createDomDoc, createXSLTemplate, defaults, docToStr, expandCollapsedElements, getAttrVal, getAttributes, getHeader, getHeaderEncoding, getHeaderStandalone, hasXmlHeader, isXml, loadOptions, manualCreateElement, needsHeader, newDocument, prependHeader, regex, strToDoc, stripAllNamespaces, stripDuplicateAttributes, stripHeader, stripNamespacedNamespace, stripNullNamespaces, tryCreateActiveX, xmlHeader;
     regex = {
       xmlNode: function() {
         return /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/i;
@@ -82,7 +82,7 @@
         id = objIds[i];
         try {
           return new ActiveXObject(id);
-        } catch (_error) {}
+        } catch (undefined) {}
       }
       return null;
     };
@@ -297,8 +297,13 @@
       }) : void 0;
     };
     collapseEmptyElements = function(xml) {
-      return xml != null ? xml.replace(/(<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)><\/\2>/gi, function(all, element) {
-        return element + "/>";
+      return xml != null ? xml.replace(/<(([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)><\/\2>/gi, function(all, element) {
+        return "<" + element + "/>";
+      }) : void 0;
+    };
+    expandCollapsedElements = function(xml) {
+      return xml != null ? xml.replace(/<(([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)\/>/gi, function(all, element, name) {
+        return "<" + element + "></" + name + ">";
       }) : void 0;
     };
     defaults = {
@@ -309,6 +314,7 @@
       encoding: 'UTF-8',
       preserveEncoding: false,
       collapseEmptyElements: true,
+      expandCollapsedElements: false,
       removeDupNamespace: true,
       removeDupAttrs: true,
       removeNullNamespace: true,
@@ -381,8 +387,11 @@
         outStr = prependHeader(outStr, opt.encoding, standalone);
       }
       outStr = cleanupXmlNodes(outStr, opt);
-      if (opt.collapseEmptyElements) {
+      if (opt.collapseEmptyElements && !opt.expandCollapsedElements) {
         outStr = collapseEmptyElements(outStr);
+      }
+      if (opt.expandCollapsedElements && !opt.collapseEmptyElements) {
+        outStr = expandCollapsedElements(outStr);
       }
       return outStr;
     };
