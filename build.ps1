@@ -1,5 +1,5 @@
-$nodeVersion = "5.0.0"
-$npmVersion = "3.3.11"
+$nodeVersion = "7.9.0"
+$npmVersion = "4.5.0"
 $downloadDir = Join-Path (pwd) "download"
 
 $x64 = [IntPtr]::Size -eq 8
@@ -53,7 +53,8 @@ if (![System.IO.File]::Exists($npmCmd)) {
 Copy-Item (Join-Path (pwd) "package.templ.json") "package.json"
 Copy-Item (Join-Path (pwd) "bower.templ.json") "bower.json"
 & $npmCmd install
+& $npmCmd run bower -- install
 
 # Run grunt (pass through args to specify build tasks)
-& $nodeExe build.js $args
+& $npmCmd run grunt -- $args
 exit $LastExitCode

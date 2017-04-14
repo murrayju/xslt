@@ -6,45 +6,63 @@ define(['jquery', 'prettydiff'], function ($, prettydiff) {
 
     var util = {};
 
-    util.xmlDiff = function (orig, diff) {
+    util.xmlDiff = function (orig, diff, noMinify) {
         expect(typeof orig).toEqual('string');
         expect(typeof diff).toEqual('string');
-        var source = prettydiff({
-            source: orig,
-            lang: 'markup',
-            mode: 'minify'
-        });
-        var changedDoc = prettydiff({
-            source: diff,
-            lang: 'markup',
-            mode: 'minify'
-        });
 
-        expect(source[0]).not.toMatch(/^Error:/);
-        expect(changedDoc[0]).not.toMatch(/^Error:/);
+        var prettySource, prettyDiff;
+        if (noMinify) {
+            prettySource = orig;
+            prettyDiff = diff;
+        } else {
+            var source = prettydiff.prettydiff({
+                source: orig,
+                lang: 'markup',
+                mode: 'minify'
+            });
+            var changedDoc = prettydiff.prettydiff({
+                source: diff,
+                lang: 'markup',
+                mode: 'minify'
+            });
 
-        var pretty = prettydiff({
-            source: source[0],
-            diff: changedDoc[0],
+            expect(source[0]).not.toMatch(/^Error:/);
+            expect(changedDoc[0]).not.toMatch(/^Error:/);
+
+            prettySource = source[0];
+            prettyDiff = changedDoc[0];
+        }
+
+        var pretty = prettydiff.prettydiff({
+            source: prettySource,
+            diff: prettyDiff,
             lang: 'markup',
             force_indent: true,
+            html: false,
+            tagmerge: false,
             context: 1
         });
-        var results = $(pretty[0]);
-        var diffInfo = results.find('p:nth-child(4)');
+        var results = $(pretty);
+        var diffInfo = results.eq(0);
         var diffCount = parseInt(diffInfo.contents().eq(2).text());
         var diffLines = parseInt(diffInfo.contents().eq(4).text());
         expect(diffCount).toBe(0);
         expect(diffLines).toBe(0);
         if (diffCount > 0) {
             console.log(diffInfo.text());
-            var left = results.eq(13).find('div.diff-left > ol.data').find('li.empty, li.replace, li.delete, li.insert');
-            var right = results.eq(13).find('div.diff-right > ol.data').find('li.empty, li.replace, li.delete, li.insert');
+            var isInteresting = function ($el) {
+                return $el.is('li.empty, li.replace, li.delete, li.insert');
+            };
+            var diffDetail = results.eq(1);
+            var left = diffDetail.find('div.diff-left > ol.data').find('li');
+            var right = diffDetail.find('div.diff-right > ol.data').find('li');
             expect(left.length).toEqual(right.length);
             left.each(function (i) {
                 var l = $(this);
                 var r = right.eq(i);
-                expect(r.text().trim()).toEqual(l.text().trim());
+                if (isInteresting(l) || isInteresting(r)) {
+                    expect(r.text().trim()).toEqual(l.text().trim());
+                }
             });
         }
     };
