@@ -9,6 +9,7 @@ define [
   'text!/base/test/data/passthrough.xsl'
   'text!/base/test/data/closingTags-mixture.xml'
   'text!/base/test/data/closingTags-collapsed.xml'
+  'text!/base/test/data/closingTags-expanded.xml'
 ], (
   xslt
   util
@@ -20,6 +21,7 @@ define [
   passthrough
   closingMix
   closingCollapsed
+  closingExpanded
 ) ->
 
   describe 'xslt', ->
@@ -42,7 +44,11 @@ define [
 
     it 'can collapse empty tags', ->
       str = xslt(closingMix, passthrough)
-      util.xmlDiff(closingCollapsed, str)
+      util.xmlDiff(closingCollapsed, str, true)
+
+    it 'can expand collapsed tags', ->
+      str = xslt(closingMix, passthrough, {collapseEmptyElements: false, expandCollapsedElements: true})
+      util.xmlDiff(closingExpanded, str, true)
 
     it 'can do cleanup as a separate step', ->
       str = xslt(closingMix, passthrough, {cleanup: false})

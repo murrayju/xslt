@@ -1,6 +1,6 @@
 #!/bin/bash
 
-nodeVersion=5.0.0
+nodeVersion=7.9.0
 downloadDir=`pwd`/download
 mkdir -p $downloadDir
 
@@ -39,5 +39,6 @@ fi
 cp package.templ.json package.json
 cp bower.templ.json bower.json
 $npmCmd install
+$npmCmd run bower -- install
 
-exec $nodeCmd build.js "$@"
+exec $npmCmd run grunt -- "$@"

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<someDoc>
+	<person name="bob">
+		<child name="tim"></child>
+		<child name="tom"></child>
+		<child name="sally">
+			<cat name="fluffy"><color>white</color></cat>
+			<dog name="fido"></dog>
+			<rabbit name="thumper"></rabbit>
+		</child>
+	</person>
+	<person name="sue"></person>
+	<person name="jim"></person>
+</someDoc>

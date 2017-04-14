@@ -14,17 +14,6 @@ module.exports = function (grunt) {
     grunt.initConfig({
         banner: '/*! <%= pkg.name %> v<%= pkg.version %> | (c) <%= grunt.template.today("yyyy") %> Justin Murray | built on <%= grunt.template.today("yyyy-mm-dd") %> */\n',
 
-        // download external deps
-        bower: {
-            install: {
-                options: {
-                    targetDir: 'src/lib',
-                    layout: 'byComponent',
-                    cleanTargetDir: true
-                }
-            }
-        },
-
         coffee: {
             compile: {
                 options: {
@@ -102,6 +91,7 @@ module.exports = function (grunt) {
                         'test/karma/test-main.js',
                         {pattern: 'test/karma/**/*', included: false},
                         {pattern: 'test/data/**/*', included: false},
+                        {pattern: 'bower_components/**/*', included: false},
                         {pattern: 'src/**/*', included: false}
                     ],
 
@@ -360,8 +350,7 @@ module.exports = function (grunt) {
         }
     });
 
-    grunt.registerTask('prebuild', ['gitInfo', 'parseVers', 'npm-install', 'bower']);
-    grunt.registerTask('deps', ['prebuild', 'npm-install', 'bower']);
-    grunt.registerTask('build', ['clean', 'deps', 'coffee', 'usebanner', 'uglify', 'compress']);
+    grunt.registerTask('prebuild', ['gitInfo', 'parseVers']);
+    grunt.registerTask('build', ['clean', 'prebuild', 'coffee', 'usebanner', 'uglify', 'compress']);
     grunt.registerTask('default', ['build', 'test']);
 };

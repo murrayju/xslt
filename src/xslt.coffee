@@ -179,8 +179,12 @@
       return node
 
   collapseEmptyElements = (xml) ->
-    return xml?.replace /(<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)><\/\2>/gi, (all, element) ->
-      return "#{element}/>"
+    return xml?.replace /<(([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)><\/\2>/gi, (all, element) ->
+      return "<#{element}/>"
+
+  expandCollapsedElements = (xml) ->
+    return xml?.replace /<(([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*)\/>/gi, (all, element, name) ->
+      return "<#{element}></#{name}>"
 
   defaults =
     fullDocument: false
@@ -190,6 +194,7 @@
     encoding: 'UTF-8'
     preserveEncoding: false
     collapseEmptyElements: true
+    expandCollapsedElements: false
     removeDupNamespace: true
     removeDupAttrs: true
     removeNullNamespace: true
@@ -245,7 +250,8 @@
     outStr = stripHeader(outStr) if opt.normalizeHeader or !opt.xmlHeaderInOutput
     outStr = prependHeader(outStr, opt.encoding, standalone) if opt.xmlHeaderInOutput and needsHeader(outStr)
     outStr = cleanupXmlNodes(outStr, opt)
-    outStr = collapseEmptyElements(outStr) if opt.collapseEmptyElements
+    outStr = collapseEmptyElements(outStr) if opt.collapseEmptyElements and !opt.expandCollapsedElements
+    outStr = expandCollapsedElements(outStr) if opt.expandCollapsedElements and !opt.collapseEmptyElements
     return outStr
 
   return $xslt
