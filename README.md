@@ -29,12 +29,15 @@ options = {
   normalizeHeader: true,
   encoding: 'UTF-8',
   preserveEncoding: false, // When false, always uses the above encoding. When true, keeps whatever the doc says
-  collapseEmptyElements: true, // Forces output of self-closing tags
   removeDupNamespace: true,
   removeDupAttrs: true,
   removeNullNamespace: true,
   removeAllNamespaces: false,
   removeNamespacedNamespace: true
+
+  // These two are mutually exclusive. Attempting to use both is the same as using neither
+  collapseEmptyElements: true, // Forces output of self-closing tags
+  expandCollapsedElements: false, // Forces output of separate closing tags
 };
 outputXmlString = xslt(inputXmlString, xslString, options);
 ```
