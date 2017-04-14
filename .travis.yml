@@ -2,7 +2,7 @@ language: node_js
 node_js:
 - stable
 install: bash build.sh prebuild
-script: bash build.sh --buildNum $TRAVIS_BUILD_NUMBER --captureTimeout 120000 --all-sl
+script: bash build.sh --buildNum=$TRAVIS_BUILD_NUMBER --captureTimeout=120000 --all-sl
 after_success: bash build.sh coveralls
 env:
   global:
