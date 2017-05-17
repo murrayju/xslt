@@ -1,14 +1,14 @@
 ((root, factory) ->
   if (typeof define == 'function' && define.amd?)
     # AMD
-    define([], factory)
+    define([], -> factory(root))
   else if (typeof module?.exports == 'object')
     # CommonJS
-    module.exports = factory()
+    module.exports = factory(root)
   else
     # global
-    root?.xslt = factory()
-) this, ->
+    root?.xslt = factory(root)
+) this, (root) ->
 
   regex =
     xmlNode: -> /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/i
@@ -35,7 +35,7 @@
   getHeaderEncoding = (str) -> getAttrVal(getHeader(str), 'encoding')
   getHeaderStandalone = (str) -> getAttrVal(getHeader(str), 'standalone')
 
-  activeXSupported = ActiveXObject? || 'ActiveXObject' of window
+  activeXSupported = ActiveXObject? || 'ActiveXObject' of root
 
   tryCreateActiveX = (objIds...) ->
     return null unless activeXSupported

@@ -1,4 +1,4 @@
-/*! xslt v0.8.0+master.0.a112fb6468a6 | (c) 2017 Justin Murray | built on 2017-04-14 */
+/*! xslt v0.8.1+master.0.b0c145bdeea2 | (c) 2017 Justin Murray | built on 2017-05-17 */
 
 (function() {
   var slice = [].slice,
@@ -6,13 +6,15 @@
 
   (function(root, factory) {
     if (typeof define === 'function' && (define.amd != null)) {
-      return define([], factory);
+      return define([], function() {
+        return factory(root);
+      });
     } else if (typeof (typeof module !== "undefined" && module !== null ? module.exports : void 0) === 'object') {
-      return module.exports = factory();
+      return module.exports = factory(root);
     } else {
-      return root != null ? root.xslt = factory() : void 0;
+      return root != null ? root.xslt = factory(root) : void 0;
     }
-  })(this, function() {
+  })(this, function(root) {
     var $xslt, activeXSupported, buildElementString, cleanRootNamespaces, cleanupXmlNodes, collapseEmptyElements, createDomDoc, createXSLTemplate, defaults, docToStr, expandCollapsedElements, getAttrVal, getAttributes, getHeader, getHeaderEncoding, getHeaderStandalone, hasXmlHeader, isXml, loadOptions, manualCreateElement, needsHeader, newDocument, prependHeader, regex, strToDoc, stripAllNamespaces, stripDuplicateAttributes, stripHeader, stripNamespacedNamespace, stripNullNamespaces, tryCreateActiveX, xmlHeader;
     regex = {
       xmlNode: function() {
@@ -71,7 +73,7 @@
     getHeaderStandalone = function(str) {
       return getAttrVal(getHeader(str), 'standalone');
     };
-    activeXSupported = (typeof ActiveXObject !== "undefined" && ActiveXObject !== null) || 'ActiveXObject' in window;
+    activeXSupported = (typeof ActiveXObject !== "undefined" && ActiveXObject !== null) || 'ActiveXObject' in root;
     tryCreateActiveX = function() {
       var i, id, len, objIds;
       objIds = 1 <= arguments.length ? slice.call(arguments, 0) : [];

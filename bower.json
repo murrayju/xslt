@@ -24,12 +24,12 @@
     "require-cs": "0.5",
     "text": "2",
     "jquery": "1",
-    "prettydiff": "austincheney/prettydiff"
+    "prettydiff": "austincheney/prettydiff#e703791"
   },
   "exportsOverride": {
     "coffee-script": {
       "extras": "extras/*"
     }
   },
-  "version": "0.8.0+master.0.a112fb6468a6"
+  "version": "0.8.1+master.0.b0c145bdeea2"
 }
