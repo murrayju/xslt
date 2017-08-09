@@ -1,6 +1,6 @@
 #!/bin/bash
 
-nodeVersion=7.9.0
+nodeVersion=8.2.1
 downloadDir=`pwd`/download
 mkdir -p $downloadDir
 
@@ -36,9 +36,25 @@ if [ ! -f $npmCmd ]; then
 	tar xzf $nodeDl -C $downloadDir
 fi
 
-cp package.templ.json package.json
-cp bower.templ.json bower.json
-$npmCmd install
-$npmCmd run bower -- install
+yarnUrl=https://yarnpkg.com/latest.tar.gz
+yarnDl=$downloadDir/yarn.tar.gz
 
-exec $npmCmd run grunt -- "$@"
+if [ ! -f $yarnDl ]; then
+	echo Downloading $yarnUrl to $yarnDl
+	curl -L -o $yarnDl $yarnUrl
+fi
+
+yarnDir=$downloadDir/yarn
+mkdir -p $yarnDir
+export PATH=$yarnDir/dist/bin:$PATH
+yarnJs=$yarnDir/dist/bin/yarn.js
+if [ ! -f $yarnJs ]; then
+	echo Extracting yarn gz
+	tar xzf $yarnDl -C $yarnDir/
+fi
+
+cp package.templ.json package.json
+
+$nodeCmd $yarnJs install --scripts-prepend-node-path=true
+
+exec $nodeCmd $yarnJs run --scripts-prepend-node-path=true grunt -- "$@"

@@ -1,58 +1,62 @@
 {
-    "name": "xslt",
-    "repository": "murrayju/xslt",
-    "license": "MIT",
-    "keywords": [
-        "js",
-        "xslt",
-        "xml"
-    ],
-    "homepage": "https://github.com/murrayju/xslt",
-    "main": "dist/xslt.min.js",
-    "bugs": {
-        "url": "https://github.com/murrayju/xslt/issues"
-    },
-    "dependencies": {},
-    "devDependencies": {
-        "grunt": "*",
-        "karma": "*",
-        "grunt-cli": "*",
-        "grunt-bower-task": "*",
-        "grunt-contrib-coffee": "*",
-        "grunt-contrib-uglify": "*",
-        "grunt-contrib-compress": "*",
-        "grunt-contrib-clean": "*",
-        "grunt-karma": "*",
-        "grunt-banner": "*",
-        "grunt-npm-install": "*",
-        "grunt-coffeelint": "*",
-        "coffeelint": "*",
-        "grunt-karma-coveralls": "*",
-        "time-grunt": "*",
-        "karma-chrome-launcher": "*",
-        "karma-firefox-launcher": "*",
-        "karma-ie-launcher": "*",
-        "karma-safari-launcher": "*",
-        "karma-jasmine": "*",
-        "jasmine-core": "*",
-        "karma-junit-reporter": "*",
-        "karma-browserstack-launcher": "*",
-        "karma-sauce-launcher": "*",
-        "karma-requirejs": "*",
-        "karma-coverage": "*",
-        "ibrik": "*",
-        "load-grunt-tasks": "*",
-        "lodash": "*",
-        "requirejs": "2",
-        "coffee-script": "1"
-    },
-    "scripts": {
-        "pretest": "grunt build",
-        "test": "grunt test",
-        "grunt": "grunt",
-        "bower": "bower"
-    },
-    "engines": {
-        "node": ">=0.10.33"
-    }
+  "name": "xslt",
+  "repository": "murrayju/xslt",
+  "license": "MIT",
+  "keywords": [
+    "js",
+    "xslt",
+    "xml"
+  ],
+  "homepage": "https://github.com/murrayju/xslt",
+  "main": "dist/xslt.min.js",
+  "bugs": {
+    "url": "https://github.com/murrayju/xslt/issues"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "coffee-script": "jashkenas/coffeescript#1.12.7",
+    "coffeelint": "*",
+    "cs": "requirejs/require-cs",
+    "grunt": "*",
+    "grunt-banner": "*",
+    "grunt-bower-task": "*",
+    "grunt-cli": "*",
+    "grunt-coffeelint": "*",
+    "grunt-contrib-clean": "*",
+    "grunt-contrib-coffee": "*",
+    "grunt-contrib-compress": "*",
+    "grunt-contrib-uglify": "*",
+    "grunt-karma": "*",
+    "grunt-karma-coveralls": "*",
+    "ibrik": "*",
+    "jasmine-core": "*",
+    "jquery": "^3.2.1",
+    "karma": "*",
+    "karma-browserstack-launcher": "*",
+    "karma-chrome-launcher": "*",
+    "karma-coverage": "*",
+    "karma-firefox-launcher": "*",
+    "karma-ie-launcher": "*",
+    "karma-jasmine": "*",
+    "karma-junit-reporter": "*",
+    "karma-requirejs": "*",
+    "karma-safari-launcher": "*",
+    "karma-sauce-launcher": "*",
+    "load-grunt-tasks": "*",
+    "lodash": "*",
+    "prettydiff": "prettydiff/prettydiff#e7037917a895492de52424407cfd3ef9b3a9472b",
+    "requirejs": "2",
+    "text": "requirejs/text",
+    "time-grunt": "*"
+  },
+  "scripts": {
+    "pretest": "grunt build",
+    "test": "grunt test",
+    "grunt": "grunt",
+    "bower": "bower"
+  },
+  "engines": {
+    "node": ">=0.10.33"
+  }
 }
+

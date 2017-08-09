@@ -1,5 +1,6 @@
-$nodeVersion = "7.9.0"
-$npmVersion = "4.5.0"
+$nodeVersion = "6.11.1"
+$npmVersion = "5.3.0"
+$rootDir = (pwd)
 $downloadDir = Join-Path (pwd) "download"
 
 $x64 = [IntPtr]::Size -eq 8
@@ -49,12 +50,18 @@ if (![System.IO.File]::Exists($npmCmd)) {
 	Copy-Item (Join-Path $modulesDir "npm/bin/npm.cmd") $npmCmd
 }
 
+# Download yarn
+$yarnJs = Join-Path $nodeDir "node_modules/yarn/bin/yarn.js"
+if (![System.IO.File]::Exists($yarnJs)) {
+	Set-Location $nodeDir
+	& $npmCmd install yarn@0.27
+	Set-Location $rootDir
+}
+
 # Run npm install
-Copy-Item (Join-Path (pwd) "package.templ.json") "package.json"
-Copy-Item (Join-Path (pwd) "bower.templ.json") "bower.json"
-& $npmCmd install
-& $npmCmd run bower -- install
+& $nodeExe $yarnJs install --scripts-prepend-node-path=true
 
 # Run grunt (pass through args to specify build tasks)
-& $npmCmd run grunt -- $args
+& $nodeExe $yarnJs run --scripts-prepend-node-path=true grunt -- $args
 exit $LastExitCode
+
