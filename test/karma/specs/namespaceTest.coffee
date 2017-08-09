@@ -46,13 +46,16 @@ define [
             <ns2:inner #{ns(3)} ns3:id="d"/>
           </ns1:thing>
           <rootThing #{ns(4)} #{ns(1, 'alt')}>
-            <ns4:inner id="e"/>
+            <ns4:inner #{ns(5)} id="e"/>
             <ns1:inner id="f"/>
           </rootThing>
         </root>
         """
         {
           moveNamespacesToRoot: true
+          excludedNamespaceUris: [
+            'urn:test:ns5'
+          ]
         }
       )
       util.xmlDiff(

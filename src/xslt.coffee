@@ -160,12 +160,15 @@
       node = node.replace(new RegExp("NS" + num + ":xmlns:", "g"), "xmlns:")
     return node
 
-  extractNamespaces = (xml) ->
+  extractNamespaces = (xml, excludedUris = []) ->
     ns = {}
-    xml = xml?.replace regex.namespaces(), (all, key = '', uri) ->
+    xml = xml?.replace regex.namespaces(), (orig, key = '', uri) ->
       if ns[key]? && ns[key] != uri
         # Same key was used for a different namespace... better leave it
-        return all
+        return orig
+      if uri in excludedUris
+        # strip it, and don't put it in the map
+        return ''
       ns[key] = uri
       return ''
     return { xml, ns }
@@ -262,7 +265,7 @@
     outStr = stripHeader(outStr) if opt.normalizeHeader or !opt.xmlHeaderInOutput
     outStr = prependHeader(outStr, opt.encoding, standalone) if opt.xmlHeaderInOutput and needsHeader(outStr)
     if opt.moveNamespacesToRoot
-      { ns, xml: outStr } = extractNamespaces(outStr)
+      { ns, xml: outStr } = extractNamespaces(outStr, opt.excludedNamespaceUris)
       for key, uri of opt.includeNamespaces
         ns[key] = uri
       opt.includeNamespaces = ns
