@@ -1,4 +1,4 @@
-/*! xslt v0.8.1+master.0.b0c145bdeea2 | (c) 2017 Justin Murray | built on 2017-05-17 */
+/*! xslt v0.9.0+master.0.d22cf28e2fe6 | (c) 2017 Justin Murray | built on 2017-08-09 */
 
 (function() {
   var slice = [].slice,
@@ -15,7 +15,7 @@
       return root != null ? root.xslt = factory(root) : void 0;
     }
   })(this, function(root) {
-    var $xslt, activeXSupported, buildElementString, cleanRootNamespaces, cleanupXmlNodes, collapseEmptyElements, createDomDoc, createXSLTemplate, defaults, docToStr, expandCollapsedElements, getAttrVal, getAttributes, getHeader, getHeaderEncoding, getHeaderStandalone, hasXmlHeader, isXml, loadOptions, manualCreateElement, needsHeader, newDocument, prependHeader, regex, strToDoc, stripAllNamespaces, stripDuplicateAttributes, stripHeader, stripNamespacedNamespace, stripNullNamespaces, tryCreateActiveX, xmlHeader;
+    var $xslt, activeXSupported, buildElementString, cleanRootNamespaces, cleanupXmlNodes, collapseEmptyElements, createDomDoc, createXSLTemplate, defaults, docToStr, expandCollapsedElements, extractNamespaces, getAttrVal, getAttributes, getHeader, getHeaderEncoding, getHeaderStandalone, hasXmlHeader, isXml, loadOptions, manualCreateElement, needsHeader, newDocument, prependHeader, regex, strToDoc, stripAllNamespaces, stripDuplicateAttributes, stripHeader, stripNamespacedNamespace, stripNullNamespaces, tryCreateActiveX, xmlHeader;
     regex = {
       xmlNode: function() {
         return /<([a-z_][a-z_0-9:\.\-]*\b)\s*(?:\/(?!>)|[^>\/])*(\/?)>/i;
@@ -255,6 +255,24 @@
       }
       return node;
     };
+    extractNamespaces = function(xml) {
+      var ns;
+      ns = {};
+      xml = xml != null ? xml.replace(regex.namespaces(), function(all, key, uri) {
+        if (key == null) {
+          key = '';
+        }
+        if ((ns[key] != null) && ns[key] !== uri) {
+          return all;
+        }
+        ns[key] = uri;
+        return '';
+      }) : void 0;
+      return {
+        xml: xml,
+        ns: ns
+      };
+    };
     cleanupXmlNodes = function(xml, opt) {
       var isRootNode, namespaceBlacklist;
       namespaceBlacklist = [];
@@ -323,7 +341,8 @@
       removeAllNamespaces: false,
       removeNamespacedNamespace: true,
       includeNamespaces: {},
-      excludedNamespaceUris: []
+      excludedNamespaceUris: [],
+      moveNamespacesToRoot: false
     };
     loadOptions = function(options) {
       var opt, p;
@@ -373,7 +392,7 @@
       return outStr;
     };
     $xslt.cleanup = function(outStr, options) {
-      var opt, standalone;
+      var key, ns, opt, ref, ref1, standalone, uri;
       opt = loadOptions(options);
       if (!opt.cleanup) {
         return;
@@ -387,6 +406,15 @@
       }
       if (opt.xmlHeaderInOutput && needsHeader(outStr)) {
         outStr = prependHeader(outStr, opt.encoding, standalone);
+      }
+      if (opt.moveNamespacesToRoot) {
+        ref = extractNamespaces(outStr), ns = ref.ns, outStr = ref.xml;
+        ref1 = opt.includeNamespaces;
+        for (key in ref1) {
+          uri = ref1[key];
+          ns[key] = uri;
+        }
+        opt.includeNamespaces = ns;
       }
       outStr = cleanupXmlNodes(outStr, opt);
       if (opt.collapseEmptyElements && !opt.expandCollapsedElements) {
