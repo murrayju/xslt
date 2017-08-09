@@ -2,13 +2,14 @@
 (function (requirejs) {
   'use strict';
 
-  var args = window.__karma__.config.args;
-  var debug = args.length && (args[0] === '--testDebug');
+  var args = window.__karma__.config.args || [];
+  var indexOf = [].indexOf || function (item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+  var debug = indexOf.call(args, '--testDebug') >= 0;
   var allTestFiles = [];
   var pathToModule = function (path) {
     var base = path.replace(/^\/base\//, '../');
     if (/\.coffee$/.test(base)) {
-      return (debug ? 'cs!' : 'coffee!') + base.replace(/\.coffee$/, '');
+      return 'coffee!' + base.replace(/\.coffee$/, '');
     }
     return base.replace(/\.js$/, '');
   };

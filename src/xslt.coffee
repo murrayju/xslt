@@ -24,7 +24,8 @@
     str += "standalone=\"#{standalone}\" " if standalone?
     str += '?>'
     return str
-  prependHeader = (str, encoding, standalone) -> xmlHeader(encoding, standalone) + str
+  prependHeader = (str, encoding, standalone) ->
+    xmlHeader(encoding, standalone) + str
   stripHeader = (str) -> str?.replace(regex.xmlHeader(), '')
   getHeader = (str) ->
     match = str?.match(regex.xmlHeader())
@@ -124,7 +125,7 @@
       attrs[name] = val unless excludeFn?(name, val)
     return attrs
 
-  buildElementString = (nodeName, attrs={}, closeTag='') ->
+  buildElementString = (nodeName, attrs = {}, closeTag = '') ->
     elStr = "<#{nodeName}"
     elStr += " #{name}=#{val.outer}" for name, val of attrs
     elStr += "#{closeTag}>"
@@ -138,10 +139,10 @@
       unless uri in (val.inner for name, val of attrs)
         attName = 'xmlns'
         attName += ":#{ns}" if ns.length
-        attrs[attName] = {outer: "\"#{uri}\"", inner: uri}
+        attrs[attName] = { outer: "\"#{uri}\"", inner: uri }
     buildElementString(nodeName, attrs, closeTag)
 
-  stripDuplicateAttributes = (node, nodeName, closeTag, blacklist=[]) ->
+  stripDuplicateAttributes = (node, nodeName, closeTag, blacklist = []) ->
     attrs = getAttributes node, (name, val) -> val.inner in blacklist
     buildElementString(nodeName, attrs, closeTag)
 
@@ -158,6 +159,16 @@
     for num in nums
       node = node.replace(new RegExp("NS" + num + ":xmlns:", "g"), "xmlns:")
     return node
+
+  extractNamespaces = (xml) ->
+    ns = {}
+    xml = xml?.replace regex.namespaces(), (all, key = '', uri) ->
+      if ns[key]? && ns[key] != uri
+        # Same key was used for a different namespace... better leave it
+        return all
+      ns[key] = uri
+      return ''
+    return { xml, ns }
 
   # Combine rules that apply to a single node at a time
   cleanupXmlNodes = (xml, opt) ->
@@ -202,6 +213,7 @@
     removeNamespacedNamespace: true
     includeNamespaces: {}
     excludedNamespaceUris: []
+    moveNamespacesToRoot: false
 
   loadOptions = (options) ->
     opt = {}
@@ -249,6 +261,11 @@
     standalone = getHeaderStandalone(outStr)
     outStr = stripHeader(outStr) if opt.normalizeHeader or !opt.xmlHeaderInOutput
     outStr = prependHeader(outStr, opt.encoding, standalone) if opt.xmlHeaderInOutput and needsHeader(outStr)
+    if opt.moveNamespacesToRoot
+      { ns, xml: outStr } = extractNamespaces(outStr)
+      for key, uri of opt.includeNamespaces
+        ns[key] = uri
+      opt.includeNamespaces = ns
     outStr = cleanupXmlNodes(outStr, opt)
     outStr = collapseEmptyElements(outStr) if opt.collapseEmptyElements and !opt.expandCollapsedElements
     outStr = expandCollapsedElements(outStr) if opt.expandCollapsedElements and !opt.collapseEmptyElements
