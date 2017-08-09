@@ -33,7 +33,8 @@ options = {
   removeDupAttrs: true,
   removeNullNamespace: true,
   removeAllNamespaces: false,
-  removeNamespacedNamespace: true
+  removeNamespacedNamespace: true,
+  moveNamespacesToRoot: false,
 
   // These two are mutually exclusive. Attempting to use both is the same as using neither
   collapseEmptyElements: true, // Forces output of self-closing tags
