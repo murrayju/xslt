@@ -1,4 +1,4 @@
-/*! xslt v0.9.0+master.0.d22cf28e2fe6 | (c) 2017 Justin Murray | built on 2017-08-09 */
+/*! xslt v0.9.1+master.0.67dff610fd9b | (c) 2017 Justin Murray | built on 2017-08-09 */
 
 (function() {
   var slice = [].slice,
@@ -255,15 +255,21 @@
       }
       return node;
     };
-    extractNamespaces = function(xml) {
+    extractNamespaces = function(xml, excludedUris) {
       var ns;
+      if (excludedUris == null) {
+        excludedUris = [];
+      }
       ns = {};
-      xml = xml != null ? xml.replace(regex.namespaces(), function(all, key, uri) {
+      xml = xml != null ? xml.replace(regex.namespaces(), function(orig, key, uri) {
         if (key == null) {
           key = '';
         }
         if ((ns[key] != null) && ns[key] !== uri) {
-          return all;
+          return orig;
+        }
+        if (indexOf.call(excludedUris, uri) >= 0) {
+          return '';
         }
         ns[key] = uri;
         return '';
@@ -408,7 +414,7 @@
         outStr = prependHeader(outStr, opt.encoding, standalone);
       }
       if (opt.moveNamespacesToRoot) {
-        ref = extractNamespaces(outStr), ns = ref.ns, outStr = ref.xml;
+        ref = extractNamespaces(outStr, opt.excludedNamespaceUris), ns = ref.ns, outStr = ref.xml;
         ref1 = opt.includeNamespaces;
         for (key in ref1) {
           uri = ref1[key];
